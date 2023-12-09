@@ -1,7 +1,8 @@
-import Bookmarks from "@/app/ui/bookmarks";
+import Bookmark from "@/app/ui/bookmark";
 import Link from "next/link";
 import Image from "next/image";
 import { fetchUserInfo } from "@/app/lib/hatebu";
+import { BookmarkStarGatherer } from "@/app/lib/gather";
 
 export default async function Page({ params }: { params: { username: string } }) {
   const username = params.username;
@@ -9,33 +10,33 @@ export default async function Page({ params }: { params: { username: string } })
 
   const userInfo = await fetchUserInfo(username);
 
+  const gatherer = new BookmarkStarGatherer(username);
+  const bookmarkerData = await gatherer.main();
+
   return (
-    <section>
-      <h1>{username}</h1>
-      <Link href={userPage} target="_blank">
-        <Image src={userInfo.profile_image_url} width={64} height={64} alt={username} />
-      </Link>
-      <Bookmarks username={username}></Bookmarks>
+    <main className="flex justify-center">
+      <section className="max-w-prose px-8">
+        <h1>{username}</h1>
+        <h2>total ★: {bookmarkerData.totalStars}</h2>
+        <Link href={userPage} target="_blank">
+          <Image src={userInfo.profile_image_url} width={64} height={64} alt={username} />
+        </Link>
 
-      {/* <h2>total ★: {bookmarker.totalStars}</h2> */}
+        <div>
+          {bookmarkerData.bookmarks.map((bookmark) => (
+            <Bookmark bookmark={bookmark} key={bookmark.eid}></Bookmark>
+          ))}
+        </div>
 
-      {/* <a href={bookmarkListURL} target="_blank">
-        <img src={data.profile_image_url} alt={username} />
-      </a>
-
-      <button className="btn btn-primary" onClick={reloadBookmarkerPage} disabled={isLoading}>
+        {/* <button className="btn btn-primary" onClick={reloadBookmarkerPage} disabled={isLoading}>
         再取得
       </button> */}
 
-      {/* {#if isLoading}
+        {/* {#if isLoading}
         <div>{progress} / 1</div>
-    {/if}
-
-    {#each bookmarker?.bookmarks as bookmark, i (bookmark.eid)}
-        {#if i < displayBookmarksCount}
-            <Bookmark {username} {bookmark} />
-        {/if}
-    {/each} */}
-    </section>
+    {/if}    
+    */}
+      </section>
+    </main>
   );
 }

@@ -33,7 +33,7 @@ export default function Bookmark({ bookmark }: { bookmark: IBookmark }) {
                 </>
               );
             } else {
-              return Array(starCount).map((_, i) => (
+              return [...Array(starCount)].map((_, i) => (
                 <span key={`${bookmark.eid}_${colorType}_${i}`} className={`i-solar-star-bold w-6 h-6 bg-${colorType}-500`}></span>
               ));
             }
