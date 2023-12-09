@@ -6,6 +6,10 @@ const nextConfig = {
         protocol: "https",
         hostname: "cdn.profile-image.st-hatena.com",
       },
+      {
+        protocol: "https",
+        hostname: "cdn-ak-scissors.b.st-hatena.com",
+      },
     ],
   },
 };
