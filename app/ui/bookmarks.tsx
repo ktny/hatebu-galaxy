@@ -1,15 +1,15 @@
 "use client";
 
-import { IBookmark } from "../lib/models";
+import { ColorTypes, IBookmark, IStarCount, initalStarCount } from "@/app/lib/models";
 import Bookmark from "./bookmark";
+import { BOOKMARKS_PER_PAGE } from "@/app/constants";
 import { useState, useEffect, useRef } from "react";
+import { deepCopy } from "../lib/util";
 
-// ブックマーク一覧の1ページに存在するブックマーク数（はてなブックマークの仕様）
-const BOOKMARKS_PER_PAGE = 20;
 const pageChunk = 10;
 
-async function fetchBookmarkData(username: string, page: number, pageChunk: number) {
-  const res = await fetch(`/api/gather?username=${username}&page=${page}&pageChunk=${pageChunk}`, { cache: "force-cache" });
+async function fetchBookmarkData(username: string, page: number, pageChunk: number, cache: RequestCache) {
+  const res = await fetch(`/api/gather?username=${username}&page=${page}&pageChunk=${pageChunk}`, { cache });
   const data = await res.json();
   return data;
 }
@@ -18,23 +18,54 @@ export default function Bookmarks({ username, totalBookmarks }: { username: stri
   const effectRan = useRef(false);
   const [bookmarks, setBookmarks] = useState<IBookmark[]>([]);
   const [progress, setProgress] = useState(0);
-  const [totalStars, setTotalStars] = useState(0);
+  const [totalStars, setTotalStars] = useState<IStarCount>(deepCopy(initalStarCount));
   const [bookmarkCountForDisplay, setBookmarkCountForDisplay] = useState(20);
 
-  async function reloadBookmarks() {
-    let page = 0;
+  /**
+   * 再取得用にstateを初期化する
+   */
+  function initState() {
+    setBookmarks([]);
+    setProgress(0);
+    setTotalStars(deepCopy(initalStarCount));
+    setBookmarkCountForDisplay(20);
+  }
+
+  /**
+   * 進捗バーを更新する
+   * @param loopCount
+   * @param hasNextPage
+   */
+  function updateProgress(loopCount: number, hasNextPage: boolean) {
+    const bookmarkCountFetched = loopCount * BOOKMARKS_PER_PAGE * pageChunk;
+    const progress = !hasNextPage || bookmarkCountFetched > totalBookmarks ? 100 : (bookmarkCountFetched / totalBookmarks) * 100;
+    setProgress(progress);
+  }
+
+  /**
+   * ブックマークを再取得する
+   * @param cache
+   */
+  async function reloadBookmarks(cache: RequestCache = "force-cache") {
+    initState();
+    let loopCount = 0;
     let hasNextPage = true;
 
     while (hasNextPage) {
-      const data = await fetchBookmarkData(username, page * pageChunk + 1, pageChunk);
+      const startPage = loopCount * pageChunk + 1;
+      const data = await fetchBookmarkData(username, startPage, pageChunk, cache);
       hasNextPage = data.hasNextPage;
       setBookmarks((bookmarks) => bookmarks.concat(data.bookmarks));
-      setTotalStars((totalStars) => (totalStars += data.totalStars));
+      setTotalStars((totalStars) => {
+        const _totalStars = deepCopy(totalStars);
+        ColorTypes.forEach((starType) => {
+          _totalStars[starType] += data.totalStars[starType];
+        });
+        return _totalStars;
+      });
 
-      const bookmarkCountFetched = page * BOOKMARKS_PER_PAGE * pageChunk;
-      const progress = !hasNextPage || bookmarkCountFetched > totalBookmarks ? 100 : (bookmarkCountFetched / totalBookmarks) * 100;
-      setProgress(progress);
-      page += 1;
+      loopCount += 1;
+      updateProgress(loopCount, hasNextPage);
     }
   }
 
@@ -59,11 +90,32 @@ export default function Bookmarks({ username, totalBookmarks }: { username: stri
   return (
     <section className="mt-4">
       <div>
-        <div className="flex">
-          <span className="i-solar-star-bold w-6 h-6 bg-yellow-500"></span>
-          {totalStars}
+        <div className="flex items-center gap-4">
+          <div className="flex items-center">
+            <span className="i-solar-star-bold w-6 h-6 bg-purple-500"></span>
+            <span>{totalStars.purple}</span>
+            <span className="i-solar-star-bold w-6 h-6 bg-blue-500"></span>
+            <span>{totalStars.blue}</span>
+            <span className="i-solar-star-bold w-6 h-6 bg-red-500"></span>
+            <span>{totalStars.red}</span>
+            <span className="i-solar-star-bold w-6 h-6 bg-green-500"></span>
+            <span>{totalStars.green}</span>
+            <span className="i-solar-star-bold w-6 h-6 bg-yellow-500"></span>
+            <span>{totalStars.yellow}</span>
+          </div>
+          <button
+            className="btn btn-primary btn-sm shrink-0"
+            onClick={() => {
+              if (confirm("再取得には時間がかかる可能性があります。再取得しますか？")) {
+                reloadBookmarks("reload");
+              }
+            }}
+            disabled={progress < 100}
+          >
+            再取得
+          </button>
         </div>
-        <progress className="progress progress-primary w-full" value={progress} max="100"></progress>
+        <progress className="progress progress-primary w-full" value={progress == null ? 0 : progress} max="100"></progress>
       </div>
       <ul className="mt-4">
         {/* 星の色は動的なクラス名となるため事前CSSビルドで検知できるように静的なクラス名も書いておく */}

@@ -1,17 +1,19 @@
-import { type IBookmark, type Bookmark, type BookmarksPageResponse, type IBookmarker, initalStarCount, type IStarCount, type StarPageResponse } from "./models";
+import {
+  type IBookmark,
+  type Bookmark,
+  type BookmarksPageResponse,
+  initalStarCount,
+  type IStarCount,
+  type StarPageResponse,
+  ColorTypes,
+} from "@/app/lib/models";
+import { deepCopy, excludeProtocolFromURL, extractEIDFromURL, formatDateString } from "@/app/lib/util";
+import { BOOKMARKS_PER_PAGE } from "@/app/constants";
 
 const entriesEndpoint = `https://s.hatena.ne.jp/entry.json`;
 
-// ブックマーク一覧の1ページに存在するブックマーク数（はてなブックマークの仕様）
-const BOOKMARKS_PER_PAGE = 20;
-
 export class BookmarkStarGatherer {
   username: string;
-  currentPage = 1;
-  bookmarkerData: IBookmarker = {
-    bookmarks: [],
-    totalStars: 0, // フロントで計算する？無駄か
-  };
 
   constructor(username: string) {
     this.username = username;
@@ -71,23 +73,6 @@ export class BookmarkStarGatherer {
     };
   }
 
-  /**
-   * YYYY-MM-DD形式に変換する
-   * @param dateString
-   * @returns
-   */
-  private formatDateString(dateString: string): string {
-    // 文字列をDateオブジェクトに変換
-    const originalDate = new Date(dateString);
-
-    // 年月日を取得
-    const year = originalDate.getFullYear();
-    const month = (originalDate.getMonth() + 1).toString().padStart(2, "0"); // 月は0から始まるため+1
-    const day = originalDate.getDate().toString().padStart(2, "0");
-    const date = `${year}-${month}-${day}`;
-    return date;
-  }
-
   private buildCommentURL(bookmark: Bookmark, date: string) {
     return `https://b.hatena.ne.jp/${this.username}/${date}#bookmark-${bookmark.location_id}`;
   }
@@ -114,30 +99,9 @@ export class BookmarkStarGatherer {
     return entries;
   }
 
-  private calcTotalStarCount(starCount: IStarCount): number {
-    return Object.values(starCount).reduce((acc, cur) => acc + cur);
-  }
-
-  private excludeProtocolFromURL(url: string) {
-    return url.replace("http://", "").replace("https://", "");
-  }
-
   private buildBookmarksURL(bookmark: Bookmark) {
-    const urlWithoutHTTP = this.excludeProtocolFromURL(bookmark.url);
+    const urlWithoutHTTP = excludeProtocolFromURL(bookmark.url);
     return `https://b.hatena.ne.jp/entry/s/${urlWithoutHTTP}`;
-  }
-
-  private extractEIDFromURL(url: string): string | null {
-    // #bookmark-のインデックスを取得
-    const keyword = "#bookmark-";
-    const index = url.indexOf(keyword);
-
-    // #bookmark-が見つかった場合
-    if (index !== -1) {
-      return url.substring(index + keyword.length);
-    }
-
-    return null;
   }
 
   async gather(page: number, pageChunk: number) {
@@ -146,18 +110,18 @@ export class BookmarkStarGatherer {
     const bookmarks = bulkResult.bookmarks;
     const result: {
       bookmarks: IBookmark[];
-      totalStars: number;
+      totalStars: IStarCount;
       hasNextPage: boolean;
     } = {
       bookmarks: [],
-      totalStars: 0,
+      totalStars: deepCopy(initalStarCount),
       hasNextPage: bulkResult.hasNextPage,
     };
 
     // この後の処理のため、配列でなくeidをkeyにしたdictでブックマーク情報を保持する
     const bookmarkResults: { [eid: string]: IBookmark } = {};
     for (const bookmark of bookmarks) {
-      const dateString = this.formatDateString(bookmark.created);
+      const dateString = formatDateString(bookmark.created);
       const commentURL = this.buildCommentURL(bookmark, dateString.replaceAll("-", ""));
       const bookmarksURL = this.buildBookmarksURL(bookmark);
 
@@ -170,7 +134,7 @@ export class BookmarkStarGatherer {
         bookmarkDate: dateString,
         comment: bookmark.comment,
         image: bookmark.entry.image,
-        star: initalStarCount,
+        star: deepCopy(initalStarCount),
         bookmarksURL,
         commentURL,
       };
@@ -179,13 +143,7 @@ export class BookmarkStarGatherer {
     const starData = await this.getStarCounts(bookmarkResults);
 
     for (const entry of starData) {
-      const starCount: IStarCount = {
-        yellow: 0,
-        green: 0,
-        red: 0,
-        blue: 0,
-        purple: 0,
-      };
+      const starCount: IStarCount = deepCopy(initalStarCount);
 
       for (const star of entry.stars) {
         if (typeof star === "number") {
@@ -207,10 +165,12 @@ export class BookmarkStarGatherer {
         }
       }
 
-      const eid = this.extractEIDFromURL(entry.uri);
+      const eid = extractEIDFromURL(entry.uri);
       if (eid !== null) {
         bookmarkResults[eid] = { ...bookmarkResults[eid], star: starCount };
-        result.totalStars += this.calcTotalStarCount(starCount);
+        ColorTypes.forEach((starType) => {
+          result.totalStars[starType] += starCount[starType];
+        });
       }
     }
 

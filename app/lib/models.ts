@@ -63,7 +63,7 @@ export interface IStarCount {
   purple: number;
 }
 
-export const initalStarCount = { yellow: 0, green: 0, red: 0, blue: 0, purple: 0 };
+export const initalStarCount: IStarCount = { yellow: 0, green: 0, red: 0, blue: 0, purple: 0 };
 
 export interface IBookmark {
   eid: string;

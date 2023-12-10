@@ -29,7 +29,6 @@ export default async function Page({ params }: { params: { username: string } })
           <h1 className="font-mono text-2xl" style={{ overflowWrap: "anywhere" }}>
             {username}
           </h1>
-          <button className="btn btn-primary btn-md shrink-0">再取得</button>
         </div>
 
         <Bookmarks username={username} totalBookmarks={user.total_bookmarks}></Bookmarks>
