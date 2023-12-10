@@ -1,41 +1,35 @@
-import Bookmark from "@/app/ui/bookmark";
+// import Bookmark from "@/app/ui/bookmark";
+import Bookmarks from "@/app/ui/bookmarks";
 import Link from "next/link";
 import Image from "next/image";
-import { fetchUserInfo } from "@/app/lib/hatebu";
-import { BookmarkStarGatherer } from "@/app/lib/gather";
+
+async function fetchUserIcon(username: string) {
+  const url = `https://b.hatena.ne.jp/api/internal/cambridge/user/${username}`;
+  const response = await fetch(url, { next: { revalidate: 86400 } });
+  const data = await response.json();
+  return data.user.profile_image_url;
+}
 
 export default async function Page({ params }: { params: { username: string } }) {
   const username = params.username;
   const userPage = `https://b.hatena.ne.jp/${username}/bookmark`;
-
-  const userInfo = await fetchUserInfo(username);
-
-  const gatherer = new BookmarkStarGatherer(username);
-  const bookmarkerData = await gatherer.main();
+  const icon = await fetchUserIcon(username);
 
   return (
     <main className="flex justify-center">
       <section className="max-w-prose px-8">
         <h1>{username}</h1>
-        <h2>total ★: {bookmarkerData.totalStars}</h2>
+        {/* <h2>total ★: {user.totalStars}</h2> */}
         <Link href={userPage} target="_blank">
-          <Image src={userInfo.profile_image_url} width={64} height={64} alt={username} />
+          <Image src={icon} width={64} height={64} alt={username} />
         </Link>
 
-        <div>
-          {bookmarkerData.bookmarks.map((bookmark) => (
+        <Bookmarks username={username}></Bookmarks>
+        {/* <div>
+          {user.bookmarks.map((bookmark) => (
             <Bookmark bookmark={bookmark} key={bookmark.eid}></Bookmark>
           ))}
-        </div>
-
-        {/* <button className="btn btn-primary" onClick={reloadBookmarkerPage} disabled={isLoading}>
-        再取得
-      </button> */}
-
-        {/* {#if isLoading}
-        <div>{progress} / 1</div>
-    {/if}    
-    */}
+        </div> */}
       </section>
     </main>
   );

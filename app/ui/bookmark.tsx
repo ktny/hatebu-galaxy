@@ -2,27 +2,27 @@ import Link from "next/link";
 import Image from "next/image";
 import { ColorTypes, IBookmark } from "../lib/models";
 
-export default function Bookmark({ bookmark }: { bookmark: IBookmark }) {
+export default function Bookmark({ username, bookmark, key }: { username: string; bookmark: IBookmark; key: string }) {
   return (
-    <div className="card w-full shadow-xl mb-8">
-      <figure>{bookmark.image && <Image src={bookmark?.image} width={511} height={288} alt={bookmark?.title} />}</figure>
+    <div className="card w-full shadow-xl mb-8" key={key}>
+      <figure>{bookmark.image && <Image src={bookmark.image} width={511} height={288} alt={bookmark.title} />}</figure>
       <div className="card-body">
         <h2 className="card-title">
-          <Link href={bookmark?.entryURL} target="_blank">
-            {bookmark?.title}
+          <Link href={bookmark.entryURL} target="_blank">
+            {bookmark.title}
           </Link>
-          <Link href={bookmark?.bookmarksURL} target="_blank" className="badge badge-accent">
-            {bookmark?.bookmarkCount} user
+          <Link href={bookmark.bookmarksURL} target="_blank" className="badge badge-accent">
+            {bookmark.bookmarkCount} user
           </Link>
         </h2>
         <p>
-          <Link href="https://b.hatena.ne.jp/entry/{bookmark?.eid}/comment/{username}" target="_blank">
-            {bookmark?.comment}
+          <Link href={`https://b.hatena.ne.jp/entry/${bookmark.eid}/comment/${username}`} target="_blank">
+            {bookmark.comment}
           </Link>
         </p>
         <div className="flex">
           {ColorTypes.map((colorType) => {
-            const starCount = bookmark?.star[colorType];
+            const starCount = bookmark.star[colorType];
             if (starCount === undefined) return;
 
             if (starCount > 5) {

@@ -252,7 +252,7 @@ export class BookmarkStarGatherer {
         this.bookmarkerData.bookmarks.push(bookmarkResult);
       });
 
-      if (!hasNextPage || this.currentPage >= 20) {
+      if (!hasNextPage || this.currentPage >= 10) {
         this.progress = 1;
         break;
       }
