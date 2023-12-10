@@ -123,13 +123,6 @@ export class BookmarkStarGatherer {
     return Object.values(starCount).reduce((acc, cur) => acc + cur);
   }
 
-  // private calcProgress(): number {
-  //   const currentBookmarks = this.currentPage * BOOKMARKS_PER_PAGE;
-  //   const progress = currentBookmarks / this.bookmarkerData.totalBookmarks;
-  //   console.log(`${this.currentPage} page ${progress} progress`);
-  //   return progress > 1 ? 1 : progress;
-  // }
-
   private excludeProtocolFromURL(url: string) {
     return url.replace("http://", "").replace("https://", "");
   }
