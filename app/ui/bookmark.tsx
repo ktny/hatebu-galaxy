@@ -2,9 +2,9 @@ import Link from "next/link";
 import Image from "next/image";
 import { ColorTypes, IBookmark } from "../lib/models";
 
-export default function Bookmark({ username, bookmark, key }: { username: string; bookmark: IBookmark; key: string }) {
+export default function Bookmark({ username, bookmark }: { username: string; bookmark: IBookmark }) {
   return (
-    <div className="card w-full shadow-xl mb-8" key={key}>
+    <div className="card w-full shadow-xl mb-8">
       <figure>{bookmark.image && <Image src={bookmark.image} width={511} height={288} alt={bookmark.title} />}</figure>
       <div className="card-body">
         <h2 className="card-title">
@@ -27,10 +27,10 @@ export default function Bookmark({ username, bookmark, key }: { username: string
 
             if (starCount > 5) {
               return (
-                <>
-                  <span key={`${bookmark.eid}_${colorType}_more`} className={`i-solar-star-bold w-6 h-6 bg-${colorType}-500`}></span>
+                <span key={`${bookmark.eid}_${colorType}_more`} className="flex">
+                  <span className={`i-solar-star-bold w-6 h-6 bg-${colorType}-500`}></span>
                   <span>{starCount}</span>
-                </>
+                </span>
               );
             } else {
               return [...Array(starCount)].map((_, i) => (

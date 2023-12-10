@@ -82,5 +82,4 @@ export interface IBookmark {
 export interface IBookmarker {
   bookmarks: IBookmark[];
   totalStars: number;
-  totalBookmarks: number;
 }

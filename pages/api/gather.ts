@@ -9,28 +9,30 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   const username = req.query["username"] as string;
-  const filepath = `/tmp/${username}.json`;
+  const page = Number(req.query["page"]);
+  const pageChunk = Number(req.query["pageChunk"]);
 
-  try {
-    const jsonString = fs.readFileSync(filepath, "utf-8");
-    const jsonData = JSON.parse(jsonString);
-    res.status(200).json(jsonData);
-  } catch (error) {
-    console.error("ファイルの読み込みエラー:", error);
-  }
+  const filepath = `/tmp/${username}/${page}.json`;
+
+  // try {
+  //   const jsonString = fs.readFileSync(filepath, "utf-8");
+  //   const jsonData = JSON.parse(jsonString);
+  //   res.status(200).json(jsonData);
+  // } catch (error) {
+  //   console.error("ファイルの読み込みエラー:", error);
+  // }
 
   const gatherer = new BookmarkStarGatherer(username);
 
   try {
     // 取得中はローディングをtrueにする
     // loadingGatheres.add(username);
-    const bookmarkerData = await gatherer.main();
+    const data = await gatherer.gather(page, pageChunk);
+    res.status(200).json(data);
 
     // 取得したデータはファイルに保存してキャッシュする
-    const jsonString = JSON.stringify(bookmarkerData, null, 2);
-    fs.writeFileSync(filepath, jsonString, "utf-8");
-
-    res.status(200).json(bookmarkerData);
+    // const jsonString = JSON.stringify(data, null, 2);
+    // fs.writeFileSync(filepath, jsonString, "utf-8");
   } finally {
     // loadingGatheres.delete(username);
   }

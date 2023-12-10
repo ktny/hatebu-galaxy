@@ -5,16 +5,12 @@ const entriesEndpoint = `https://s.hatena.ne.jp/entry.json`;
 // ブックマーク一覧の1ページに存在するブックマーク数（はてなブックマークの仕様）
 const BOOKMARKS_PER_PAGE = 20;
 
-// 一度に取得するブックマークページの数
-const FETCH_PAGE_CHUNK = 5;
-
 export class BookmarkStarGatherer {
   username: string;
   currentPage = 1;
   progress = 0;
   bookmarkerData: IBookmarker = {
     bookmarks: [],
-    totalBookmarks: 0, // 最初に1回返せばよい
     totalStars: 0, // フロントで計算する？無駄か
   };
 
@@ -31,13 +27,6 @@ export class BookmarkStarGatherer {
     params.append("no_comments", "1");
     url.search = params.toString();
     return url.toString();
-  }
-
-  private async fetchTotalBookmarks(): Promise<number> {
-    const url = `https://b.hatena.ne.jp/api/internal/cambridge/user/${this.username}`;
-    const response = await fetch(url);
-    const data = await response.json();
-    return data.user.total_bookmarks;
   }
 
   /**
@@ -134,16 +123,12 @@ export class BookmarkStarGatherer {
     return Object.values(starCount).reduce((acc, cur) => acc + cur);
   }
 
-  private calcProgress(): number {
-    const currentBookmarks = this.currentPage * BOOKMARKS_PER_PAGE;
-    const progress = currentBookmarks / this.bookmarkerData.totalBookmarks;
-    console.log(`${this.currentPage} page ${progress} progress`);
-    return progress > 1 ? 1 : progress;
-  }
-
-  private sortBookmarksByStarCount() {
-    this.bookmarkerData.bookmarks.sort((a, b) => b.star.yellow - a.star.yellow);
-  }
+  // private calcProgress(): number {
+  //   const currentBookmarks = this.currentPage * BOOKMARKS_PER_PAGE;
+  //   const progress = currentBookmarks / this.bookmarkerData.totalBookmarks;
+  //   console.log(`${this.currentPage} page ${progress} progress`);
+  //   return progress > 1 ? 1 : progress;
+  // }
 
   private excludeProtocolFromURL(url: string) {
     return url.replace("http://", "").replace("https://", "");
@@ -167,108 +152,84 @@ export class BookmarkStarGatherer {
     return null;
   }
 
-  async main() {
-    console.log("start");
-    let hasNextPage = true;
-
-    // ブックマーカーの基礎情報を取得
-    const totalBookmarks = await this.fetchTotalBookmarks();
-    this.bookmarkerData = {
+  async gather(page: number, pageChunk: number) {
+    // 一度に最大で fetchPageChunk * BOOKMARKS_PER_PAGE のブックマークを取得する
+    const bulkResult = await this.bulkGatherBookmarks(page, pageChunk);
+    const bookmarks = bulkResult.bookmarks;
+    const result: {
+      bookmarks: IBookmark[];
+      totalStars: number;
+      hasNextPage: boolean;
+    } = {
       bookmarks: [],
-      totalBookmarks,
       totalStars: 0,
+      hasNextPage: bulkResult.hasNextPage,
     };
 
-    let loopCount = 1;
-    while (hasNextPage) {
-      console.log(this.currentPage);
+    // この後の処理のため、配列でなくeidをkeyにしたdictでブックマーク情報を保持する
+    const bookmarkResults: { [eid: string]: IBookmark } = {};
+    for (const bookmark of bookmarks) {
+      const dateString = this.formatDateString(bookmark.created);
+      const commentURL = this.buildCommentURL(bookmark, dateString.replaceAll("-", ""));
+      const bookmarksURL = this.buildBookmarksURL(bookmark);
 
-      // 一度に最大で fetchPageChunk * BOOKMARKS_PER_PAGE のブックマークを取得する
-      const bulkResult = await this.bulkGatherBookmarks(this.currentPage, FETCH_PAGE_CHUNK);
-      const bookmarks = bulkResult.bookmarks;
-      hasNextPage = bulkResult.hasNextPage;
+      bookmarkResults[bookmark.location_id] = {
+        eid: bookmark.location_id,
+        title: bookmark.entry.title,
+        bookmarkCount: bookmark.entry.total_bookmarks,
+        category: bookmark.entry.category.path,
+        entryURL: bookmark.url,
+        bookmarkDate: dateString,
+        comment: bookmark.comment,
+        image: bookmark.entry.image,
+        star: initalStarCount,
+        bookmarksURL,
+        commentURL,
+      };
+    }
 
-      // この後の処理のため、配列でなくeidをkeyにしたdictでブックマーク情報を保持する
-      const bookmarkResults: { [eid: string]: IBookmark } = {};
-      for (const bookmark of bookmarks) {
-        const dateString = this.formatDateString(bookmark.created);
-        const commentURL = this.buildCommentURL(bookmark, dateString.replaceAll("-", ""));
-        const bookmarksURL = this.buildBookmarksURL(bookmark);
+    const starData = await this.getStarCounts(bookmarkResults);
 
-        bookmarkResults[bookmark.location_id] = {
-          eid: bookmark.location_id,
-          title: bookmark.entry.title,
-          bookmarkCount: bookmark.entry.total_bookmarks,
-          category: bookmark.entry.category.path,
-          entryURL: bookmark.url,
-          bookmarkDate: dateString,
-          comment: bookmark.comment,
-          image: bookmark.entry.image,
-          star: initalStarCount,
-          bookmarksURL,
-          commentURL,
-        };
+    for (const entry of starData) {
+      const starCount: IStarCount = {
+        yellow: 0,
+        green: 0,
+        red: 0,
+        blue: 0,
+        purple: 0,
+      };
+
+      for (const star of entry.stars) {
+        if (typeof star === "number") {
+          starCount.yellow += star;
+        } else {
+          starCount.yellow++;
+        }
       }
 
-      const starData = await this.getStarCounts(bookmarkResults);
-
-      for (const entry of starData) {
-        const starCount: IStarCount = {
-          yellow: 0,
-          green: 0,
-          red: 0,
-          blue: 0,
-          purple: 0,
-        };
-
-        for (const star of entry.stars) {
-          if (typeof star === "number") {
-            starCount.yellow += star;
-          } else {
-            starCount.yellow++;
-          }
-        }
-
-        if (entry.colored_stars) {
-          for (const colorStar of entry.colored_stars) {
-            for (const star of colorStar.stars) {
-              if (typeof star === "number") {
-                starCount[colorStar.color] += star;
-              } else {
-                starCount[colorStar.color]++;
-              }
+      if (entry.colored_stars) {
+        for (const colorStar of entry.colored_stars) {
+          for (const star of colorStar.stars) {
+            if (typeof star === "number") {
+              starCount[colorStar.color] += star;
+            } else {
+              starCount[colorStar.color]++;
             }
           }
         }
-
-        const eid = this.extractEIDFromURL(entry.uri);
-        if (eid !== null) {
-          bookmarkResults[eid] = { ...bookmarkResults[eid], star: starCount };
-          this.bookmarkerData.totalStars += this.calcTotalStarCount(starCount);
-        }
       }
 
-      Object.values(bookmarkResults).forEach((bookmarkResult) => {
-        this.bookmarkerData.bookmarks.push(bookmarkResult);
-      });
-
-      if (!hasNextPage || this.currentPage >= 10) {
-        this.progress = 1;
-        break;
+      const eid = this.extractEIDFromURL(entry.uri);
+      if (eid !== null) {
+        bookmarkResults[eid] = { ...bookmarkResults[eid], star: starCount };
+        result.totalStars += this.calcTotalStarCount(starCount);
       }
-
-      // 5ループごとにブックマークをソートする
-      if (loopCount % 5 === 0) {
-        this.sortBookmarksByStarCount();
-      }
-
-      loopCount += 1;
-      this.currentPage += FETCH_PAGE_CHUNK;
-      this.progress = this.calcProgress();
     }
 
-    // ソートはフロントで常にやるという手もあるか？
-    this.sortBookmarksByStarCount();
-    return this.bookmarkerData;
+    Object.values(bookmarkResults).forEach((bookmarkResult) => {
+      result.bookmarks.push(bookmarkResult);
+    });
+
+    return result;
   }
 }
