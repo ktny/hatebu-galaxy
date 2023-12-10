@@ -2,6 +2,7 @@
 
 import { ColorTypes, IBookmark, IStarCount, initalStarCount } from "@/app/lib/models";
 import Bookmark from "./bookmark";
+import StarList from "./starList";
 import { BOOKMARKS_PER_PAGE } from "@/app/constants";
 import { useState, useEffect, useRef } from "react";
 import { deepCopy } from "../lib/util";
@@ -91,18 +92,7 @@ export default function Bookmarks({ username, totalBookmarks }: { username: stri
     <section className="mt-4">
       <div>
         <div className="flex items-center gap-4">
-          <div className="flex items-center">
-            <span className="i-solar-star-bold w-6 h-6 bg-purple-500"></span>
-            <span>{totalStars.purple}</span>
-            <span className="i-solar-star-bold w-6 h-6 bg-blue-500"></span>
-            <span>{totalStars.blue}</span>
-            <span className="i-solar-star-bold w-6 h-6 bg-red-500"></span>
-            <span>{totalStars.red}</span>
-            <span className="i-solar-star-bold w-6 h-6 bg-green-500"></span>
-            <span>{totalStars.green}</span>
-            <span className="i-solar-star-bold w-6 h-6 bg-yellow-500"></span>
-            <span>{totalStars.yellow}</span>
-          </div>
+          <StarList starsCount={totalStars} displayIfZero={true}></StarList>
           <button
             className="btn btn-primary btn-sm shrink-0"
             onClick={() => {
@@ -118,8 +108,6 @@ export default function Bookmarks({ username, totalBookmarks }: { username: stri
         <progress className="progress progress-primary w-full" value={progress == null ? 0 : progress} max="100"></progress>
       </div>
       <ul className="mt-4">
-        {/* 星の色は動的なクラス名となるため事前CSSビルドで検知できるように静的なクラス名も書いておく */}
-        <li className="hidden bg-purple-500 bg-blue-500 bg-red-500 bg-green-500 bg-yellow-500"></li>
         {bookmarks
           .sort((a, b) => b.star.yellow - a.star.yellow)
           .slice(0, bookmarkCountForDisplay)
