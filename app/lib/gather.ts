@@ -8,7 +8,6 @@ const BOOKMARKS_PER_PAGE = 20;
 export class BookmarkStarGatherer {
   username: string;
   currentPage = 1;
-  progress = 0;
   bookmarkerData: IBookmarker = {
     bookmarks: [],
     totalStars: 0, // フロントで計算する？無駄か
@@ -113,10 +112,6 @@ export class BookmarkStarGatherer {
     }
 
     return entries;
-  }
-
-  getInProgressBookmarkerData() {
-    return { bookmarkerData: this.bookmarkerData, progress: this.progress };
   }
 
   private calcTotalStarCount(starCount: IStarCount): number {

@@ -5,13 +5,12 @@ const config: Config = {
   content: ["./pages/**/*.{js,ts,jsx,tsx,mdx}", "./components/**/*.{js,ts,jsx,tsx,mdx}", "./app/**/*.{js,ts,jsx,tsx,mdx}"],
   theme: {
     extend: {
-      backgroundImage: {
-        "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",
-        "gradient-conic": "conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))",
+      width: {
+        "screen-md": "768px",
       },
     },
   },
-  plugins: [require("daisyui"), iconsPlugin({ collections: getIconCollections(["solar"]) })],
+  plugins: [require("@tailwindcss/typography"), require("daisyui"), iconsPlugin({ collections: getIconCollections(["solar"]) })],
   darkMode: "class",
   daisyui: {
     themes: ["dracula", "light"], // false: only light + dark | true: all themes | array: specific themes like this ["light", "dark", "cupcake"]

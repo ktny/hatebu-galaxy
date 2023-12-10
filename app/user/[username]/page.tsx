@@ -16,16 +16,24 @@ export default async function Page({ params }: { params: { username: string } })
   const user = await fetchUserInfo(username);
 
   return (
-    <main className="flex justify-center">
-      <section className="max-w-prose px-8">
-        <h1>{username}</h1>
-        {/* <h2>total ★: {user.totalStars}</h2> */}
-        <Link href={userPage} target="_blank">
-          <Image src={user.profile_image_url} width={64} height={64} alt={username} />
-        </Link>
+    <main className="flex md:justify-center">
+      <article className="max-w-screen-md px-4">
+        <div className="flex items-center gap-4 md:w-screen-md">
+          <div className="avatar w-16 h-16 shrink-0">
+            <div className="rounded-xl">
+              <Link href={userPage} target="_blank">
+                <Image src={user.profile_image_url} width={64} height={64} alt={username} />
+              </Link>
+            </div>
+          </div>
+          <h1 className="font-mono text-2xl" style={{ overflowWrap: "anywhere" }}>
+            {username}
+          </h1>
+          <button className="btn btn-primary btn-md shrink-0">再取得</button>
+        </div>
 
         <Bookmarks username={username} totalBookmarks={user.total_bookmarks}></Bookmarks>
-      </section>
+      </article>
     </main>
   );
 }
