@@ -39,7 +39,7 @@ export default function Bookmarks({ username, totalBookmarks }: { username: stri
    */
   function updateProgress(loopCount: number, hasNextPage: boolean) {
     const bookmarkCountFetched = loopCount * BOOKMARKS_PER_PAGE * pageChunk;
-    const progress = !hasNextPage || bookmarkCountFetched > totalBookmarks ? 100 : (bookmarkCountFetched / totalBookmarks) * 100;
+    const progress = !hasNextPage || bookmarkCountFetched > totalBookmarks ? 100 : Math.floor((bookmarkCountFetched / totalBookmarks) * 100);
     setProgress(progress);
   }
 
@@ -105,7 +105,10 @@ export default function Bookmarks({ username, totalBookmarks }: { username: stri
             再取得
           </button>
         </div>
-        <progress className="progress progress-primary w-full" value={progress == null ? 0 : progress} max="100"></progress>
+        <div className="flex items-center gap-2">
+          <progress className="progress progress-primary w-full" value={progress == null ? 0 : progress} max="100"></progress>
+          <span>{progress}%</span>
+        </div>
       </div>
       <ul className="mt-4">
         {bookmarks
