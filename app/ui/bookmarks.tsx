@@ -4,7 +4,7 @@ import { ColorTypes, IBookmark, IStarCount, initalStarCount } from "@/app/lib/mo
 import Bookmark from "./bookmark";
 import StarList from "./starList";
 import { BOOKMARKS_PER_PAGE } from "@/app/constants";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, SyntheticEvent, UIEvent, useCallback } from "react";
 import { deepCopy } from "../lib/util";
 
 const pageChunk = 10;
@@ -70,13 +70,27 @@ export default function Bookmarks({ username, totalBookmarks }: { username: stri
     }
   }
 
+  /**
+   * スクロール時に下端付近までいったら最大表示数を増やす
+   */
+  const handleScroll = useCallback(() => {
+    const documentElement = document.documentElement;
+    requestAnimationFrame(() => {
+      if (documentElement.scrollHeight - (documentElement.scrollTop + documentElement.clientHeight) < 100) {
+        setBookmarkCountForDisplay((count) => count + 20);
+      }
+    });
+  }, []);
+
   useEffect(() => {
     if (effectRan.current) {
       reloadBookmarks();
+      document.addEventListener("scroll", handleScroll, { passive: true });
     }
 
     return () => {
       effectRan.current = true;
+      document.removeEventListener("scroll", handleScroll);
     };
   }, []);
 
