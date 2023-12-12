@@ -77,7 +77,7 @@ export class BookmarkStarGatherer {
   }
 
   private async getStarCounts(bookmarkResults: { [eid: number]: IBookmark }) {
-    const commentURLs = Object.values(bookmarkResults).map((bookmark) => bookmark.commentURL);
+    const commentURLs = Object.values(bookmarkResults).map(bookmark => bookmark.commentURL);
 
     const promises: Promise<Response>[] = [];
     for (let i = 0; i < commentURLs.length; i += BOOKMARKS_PER_PAGE) {
@@ -167,13 +167,13 @@ export class BookmarkStarGatherer {
       const eid = extractEIDFromURL(entry.uri);
       if (eid !== null) {
         bookmarkResults[eid] = { ...bookmarkResults[eid], star: starCount };
-        STAR_COLOR_TYPES.forEach((starType) => {
+        STAR_COLOR_TYPES.forEach(starType => {
           result.totalStars[starType] += starCount[starType];
         });
       }
     }
 
-    Object.values(bookmarkResults).forEach((bookmarkResult) => {
+    Object.values(bookmarkResults).forEach(bookmarkResult => {
       result.bookmarks.push(bookmarkResult);
     });
 

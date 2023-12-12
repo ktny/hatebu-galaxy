@@ -16,7 +16,7 @@ async function fetchBookmarkData(username: string, page: number, pageChunk: numb
 }
 
 export default function Bookmarks({ username, totalBookmarks }: { username: string; totalBookmarks: number }) {
-  const effectRan = useRef(false);
+  // const effectRan = useRef(false);
   const [bookmarks, setBookmarks] = useState<IBookmark[]>([]);
   const [progress, setProgress] = useState(0);
   const [totalStars, setTotalStars] = useState<AllColorStarCount>(deepCopy(initalAllColorStarCount));
@@ -39,7 +39,10 @@ export default function Bookmarks({ username, totalBookmarks }: { username: stri
    */
   function updateProgress(loopCount: number, hasNextPage: boolean) {
     const bookmarkCountFetched = loopCount * BOOKMARKS_PER_PAGE * pageChunk;
-    const progress = !hasNextPage || bookmarkCountFetched > totalBookmarks ? 100 : Math.floor((bookmarkCountFetched / totalBookmarks) * 100);
+    const progress =
+      !hasNextPage || bookmarkCountFetched > totalBookmarks
+        ? 100
+        : Math.floor((bookmarkCountFetched / totalBookmarks) * 100);
     setProgress(progress);
   }
 
@@ -48,6 +51,7 @@ export default function Bookmarks({ username, totalBookmarks }: { username: stri
    * @param cache
    */
   async function reloadBookmarks(cache: RequestCache = "force-cache") {
+    console.log(`reloadBookmarks cache: ${cache}`);
     initState();
     let loopCount = 0;
     let hasNextPage = true;
@@ -56,10 +60,10 @@ export default function Bookmarks({ username, totalBookmarks }: { username: stri
       const startPage = loopCount * pageChunk + 1;
       const data = await fetchBookmarkData(username, startPage, pageChunk, cache);
       hasNextPage = data.hasNextPage;
-      setBookmarks((bookmarks) => bookmarks.concat(data.bookmarks));
-      setTotalStars((totalStars) => {
+      setBookmarks(bookmarks => bookmarks.concat(data.bookmarks));
+      setTotalStars(totalStars => {
         const _totalStars = deepCopy(totalStars);
-        STAR_COLOR_TYPES.forEach((starType) => {
+        STAR_COLOR_TYPES.forEach(starType => {
           _totalStars[starType] += data.totalStars[starType];
         });
         return _totalStars;
@@ -77,19 +81,19 @@ export default function Bookmarks({ username, totalBookmarks }: { username: stri
     const documentElement = document.documentElement;
     requestAnimationFrame(() => {
       if (documentElement.scrollHeight - (documentElement.scrollTop + documentElement.clientHeight) < 100) {
-        setBookmarkCountForDisplay((count) => count + 20);
+        setBookmarkCountForDisplay(count => count + 20);
       }
     });
   }, []);
 
   useEffect(() => {
-    if (effectRan.current) {
-      reloadBookmarks();
-      document.addEventListener("scroll", handleScroll, { passive: true });
-    }
+    // if (effectRan.current) {
+    reloadBookmarks();
+    document.addEventListener("scroll", handleScroll, { passive: true });
+    // }
 
     return () => {
-      effectRan.current = true;
+      // effectRan.current = true;
       document.removeEventListener("scroll", handleScroll);
     };
   }, []);
@@ -120,7 +124,11 @@ export default function Bookmarks({ username, totalBookmarks }: { username: stri
           </button>
         </div>
         <div className="flex items-center gap-2">
-          <progress className="progress progress-primary w-full" value={progress == null ? 0 : progress} max="100"></progress>
+          <progress
+            className="progress progress-primary w-full"
+            value={progress == null ? 0 : progress}
+            max="100"
+          ></progress>
           <span>{progress}%</span>
         </div>
       </div>
@@ -128,7 +136,7 @@ export default function Bookmarks({ username, totalBookmarks }: { username: stri
         {bookmarks
           .sort((a, b) => b.star.yellow - a.star.yellow)
           .slice(0, bookmarkCountForDisplay)
-          .map((bookmark) => (
+          .map(bookmark => (
             <li key={bookmark.eid}>
               <Bookmark username={username} bookmark={bookmark}></Bookmark>
             </li>
