@@ -4,7 +4,7 @@ import { IBookmark, AllColorStarCount, initalAllColorStarCount } from "@/app/lib
 import Bookmark from "./bookmark";
 import StarList from "./starList";
 import { BOOKMARKS_PER_PAGE, STAR_COLOR_TYPES } from "@/app/constants";
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { deepCopy } from "@/app/lib/util";
 
 const pageChunk = 10;
@@ -16,7 +16,6 @@ async function fetchBookmarkData(username: string, page: number, pageChunk: numb
 }
 
 export default function Bookmarks({ username, totalBookmarks }: { username: string; totalBookmarks: number }) {
-  // const effectRan = useRef(false);
   const [bookmarks, setBookmarks] = useState<IBookmark[]>([]);
   const [progress, setProgress] = useState(0);
   const [totalStars, setTotalStars] = useState<AllColorStarCount>(deepCopy(initalAllColorStarCount));
@@ -87,13 +86,10 @@ export default function Bookmarks({ username, totalBookmarks }: { username: stri
   }, []);
 
   useEffect(() => {
-    // if (effectRan.current) {
     reloadBookmarks();
     document.addEventListener("scroll", handleScroll, { passive: true });
-    // }
 
     return () => {
-      // effectRan.current = true;
       document.removeEventListener("scroll", handleScroll);
     };
   }, []);

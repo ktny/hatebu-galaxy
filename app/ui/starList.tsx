@@ -1,12 +1,19 @@
 import { AllColorStarCount } from "@/app/lib/models";
 import { STAR_COLOR_TYPES } from "@/app/constants";
 
-export default function StarList({ starsCount, displayIfZero }: { starsCount: AllColorStarCount; displayIfZero: boolean }) {
+export default function StarList({
+  starsCount,
+  displayIfZero,
+}: {
+  starsCount: AllColorStarCount;
+  displayIfZero: boolean;
+}) {
   return (
     <>
       <div className="flex flex-wrap items-center">
-        {STAR_COLOR_TYPES.map((colorType) => {
+        {STAR_COLOR_TYPES.map(colorType => {
           const starCount = starsCount[colorType];
+
           if (!displayIfZero && (starCount === undefined || starCount === 0)) return;
 
           if (starCount > 5 || starCount === 0) {
@@ -17,7 +24,9 @@ export default function StarList({ starsCount, displayIfZero }: { starsCount: Al
               </span>
             );
           } else {
-            return [...Array(starCount)].map((_, i) => <span key={`${colorType}_${i}`} className={`i-solar-star-bold w-6 h-6 bg-${colorType}-500`}></span>);
+            return [...Array(starCount)].map((_, i) => (
+              <span key={`${colorType}_${i}`} className={`i-solar-star-bold w-6 h-6 bg-${colorType}-500`}></span>
+            ));
           }
         })}
       </div>

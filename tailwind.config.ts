@@ -2,7 +2,11 @@ import type { Config } from "tailwindcss";
 const { iconsPlugin, getIconCollections } = require("@egoist/tailwindcss-icons");
 
 const config: Config = {
-  content: ["./pages/**/*.{js,ts,jsx,tsx,mdx}", "./components/**/*.{js,ts,jsx,tsx,mdx}", "./app/**/*.{js,ts,jsx,tsx,mdx}"],
+  content: [
+    "./pages/**/*.{js,ts,jsx,tsx,mdx}",
+    "./components/**/*.{js,ts,jsx,tsx,mdx}",
+    "./app/**/*.{js,ts,jsx,tsx,mdx}",
+  ],
   theme: {
     extend: {
       width: {
@@ -10,7 +14,11 @@ const config: Config = {
       },
     },
   },
-  plugins: [require("@tailwindcss/typography"), require("daisyui"), iconsPlugin({ collections: getIconCollections(["solar"]) })],
+  plugins: [
+    require("@tailwindcss/typography"),
+    require("daisyui"),
+    iconsPlugin({ collections: getIconCollections(["solar"]) }),
+  ],
   darkMode: "class",
   daisyui: {
     themes: ["dracula", "light"], // false: only light + dark | true: all themes | array: specific themes like this ["light", "dark", "cupcake"]
