@@ -1,6 +1,6 @@
 "use client";
 
-import { IBookmark, AllColorStarCount, initalAllColorStarCount } from "@/app/lib/models";
+import { IBookmark, AllColorStarCount, initalAllColorStarCount, IBookmarker } from "@/app/lib/models";
 import Bookmark from "./bookmark";
 import StarList from "./starList";
 import { BOOKMARKS_PER_PAGE, STAR_COLOR_TYPES } from "@/app/constants";
@@ -9,7 +9,12 @@ import { deepCopy } from "@/app/lib/util";
 
 const pageChunk = 10;
 
-async function fetchBookmarkData(username: string, page: number, pageChunk: number, cache: RequestCache) {
+async function fetchBookmarkData(
+  username: string,
+  page: number,
+  pageChunk: number,
+  cache: RequestCache
+): Promise<IBookmarker> {
   const res = await fetch(`/api/gather?username=${username}&page=${page}&pageChunk=${pageChunk}`, { cache });
   const data = await res.json();
   return data;
@@ -50,7 +55,6 @@ export default function Bookmarks({ username, totalBookmarks }: { username: stri
    * @param cache
    */
   async function reloadBookmarks(cache: RequestCache = "force-cache") {
-    console.log(`reloadBookmarks cache: ${cache}`);
     initState();
     let loopCount = 0;
     let hasNextPage = true;
@@ -128,6 +132,7 @@ export default function Bookmarks({ username, totalBookmarks }: { username: stri
           <span>{progress}%</span>
         </div>
       </div>
+
       <ul className="mt-4">
         {bookmarks
           .sort((a, b) => b.star.yellow - a.star.yellow)
