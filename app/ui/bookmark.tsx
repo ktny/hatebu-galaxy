@@ -1,7 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import StarList from "@/app/ui/starList";
-import { IBookmark } from "../lib/models";
+import { IBookmark } from "@/app/lib/models";
 
 export default function Bookmark({ username, bookmark }: { username: string; bookmark: IBookmark }) {
   return (

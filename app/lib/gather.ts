@@ -2,13 +2,12 @@ import {
   type IBookmark,
   type Bookmark,
   type BookmarksPageResponse,
-  initalStarCount,
-  type IStarCount,
+  initalAllColorStarCount,
+  type AllColorStarCount,
   type StarPageResponse,
-  ColorTypes,
 } from "@/app/lib/models";
 import { deepCopy, excludeProtocolFromURL, extractEIDFromURL, formatDateString } from "@/app/lib/util";
-import { BOOKMARKS_PER_PAGE } from "@/app/constants";
+import { BOOKMARKS_PER_PAGE, STAR_COLOR_TYPES } from "@/app/constants";
 
 const entriesEndpoint = `https://s.hatena.ne.jp/entry.json`;
 
@@ -110,11 +109,11 @@ export class BookmarkStarGatherer {
     const bookmarks = bulkResult.bookmarks;
     const result: {
       bookmarks: IBookmark[];
-      totalStars: IStarCount;
+      totalStars: AllColorStarCount;
       hasNextPage: boolean;
     } = {
       bookmarks: [],
-      totalStars: deepCopy(initalStarCount),
+      totalStars: deepCopy(initalAllColorStarCount),
       hasNextPage: bulkResult.hasNextPage,
     };
 
@@ -134,7 +133,7 @@ export class BookmarkStarGatherer {
         bookmarkDate: dateString,
         comment: bookmark.comment,
         image: bookmark.entry.image,
-        star: deepCopy(initalStarCount),
+        star: deepCopy(initalAllColorStarCount),
         bookmarksURL,
         commentURL,
       };
@@ -143,7 +142,7 @@ export class BookmarkStarGatherer {
     const starData = await this.getStarCounts(bookmarkResults);
 
     for (const entry of starData) {
-      const starCount: IStarCount = deepCopy(initalStarCount);
+      const starCount: AllColorStarCount = deepCopy(initalAllColorStarCount);
 
       for (const star of entry.stars) {
         if (typeof star === "number") {
@@ -168,7 +167,7 @@ export class BookmarkStarGatherer {
       const eid = extractEIDFromURL(entry.uri);
       if (eid !== null) {
         bookmarkResults[eid] = { ...bookmarkResults[eid], star: starCount };
-        ColorTypes.forEach((starType) => {
+        STAR_COLOR_TYPES.forEach((starType) => {
           result.totalStars[starType] += starCount[starType];
         });
       }

@@ -1,11 +1,11 @@
 "use client";
 
-import { ColorTypes, IBookmark, IStarCount, initalStarCount } from "@/app/lib/models";
+import { IBookmark, AllColorStarCount, initalAllColorStarCount } from "@/app/lib/models";
 import Bookmark from "./bookmark";
 import StarList from "./starList";
-import { BOOKMARKS_PER_PAGE } from "@/app/constants";
-import { useState, useEffect, useRef, SyntheticEvent, UIEvent, useCallback } from "react";
-import { deepCopy } from "../lib/util";
+import { BOOKMARKS_PER_PAGE, STAR_COLOR_TYPES } from "@/app/constants";
+import { useState, useEffect, useRef, useCallback } from "react";
+import { deepCopy } from "@/app/lib/util";
 
 const pageChunk = 10;
 
@@ -19,7 +19,7 @@ export default function Bookmarks({ username, totalBookmarks }: { username: stri
   const effectRan = useRef(false);
   const [bookmarks, setBookmarks] = useState<IBookmark[]>([]);
   const [progress, setProgress] = useState(0);
-  const [totalStars, setTotalStars] = useState<IStarCount>(deepCopy(initalStarCount));
+  const [totalStars, setTotalStars] = useState<AllColorStarCount>(deepCopy(initalAllColorStarCount));
   const [bookmarkCountForDisplay, setBookmarkCountForDisplay] = useState(20);
 
   /**
@@ -28,7 +28,7 @@ export default function Bookmarks({ username, totalBookmarks }: { username: stri
   function initState() {
     setBookmarks([]);
     setProgress(0);
-    setTotalStars(deepCopy(initalStarCount));
+    setTotalStars(deepCopy(initalAllColorStarCount));
     setBookmarkCountForDisplay(20);
   }
 
@@ -59,7 +59,7 @@ export default function Bookmarks({ username, totalBookmarks }: { username: stri
       setBookmarks((bookmarks) => bookmarks.concat(data.bookmarks));
       setTotalStars((totalStars) => {
         const _totalStars = deepCopy(totalStars);
-        ColorTypes.forEach((starType) => {
+        STAR_COLOR_TYPES.forEach((starType) => {
           _totalStars[starType] += data.totalStars[starType];
         });
         return _totalStars;

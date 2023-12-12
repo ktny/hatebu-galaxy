@@ -1,10 +1,11 @@
-import { ColorTypes, IStarCount } from "@/app/lib/models";
+import { AllColorStarCount } from "@/app/lib/models";
+import { STAR_COLOR_TYPES } from "@/app/constants";
 
-export default function StarList({ starsCount, displayIfZero }: { starsCount: IStarCount; displayIfZero: boolean }) {
+export default function StarList({ starsCount, displayIfZero }: { starsCount: AllColorStarCount; displayIfZero: boolean }) {
   return (
     <>
       <div className="flex flex-wrap items-center">
-        {ColorTypes.map((colorType) => {
+        {STAR_COLOR_TYPES.map((colorType) => {
           const starCount = starsCount[colorType];
           if (!displayIfZero && (starCount === undefined || starCount === 0)) return;
 

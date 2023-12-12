@@ -1,3 +1,24 @@
+// 全色の星の数
+export interface AllColorStarCount {
+  yellow: number;
+  green: number;
+  red: number;
+  blue: number;
+  purple: number;
+}
+
+// 全色の星の数の初期値
+export const initalAllColorStarCount: AllColorStarCount = { yellow: 0, green: 0, red: 0, blue: 0, purple: 0 };
+
+// はてなからレスポンスされる星の数
+export type StarCount = number | { quote: string; name: string };
+
+// はてなからレスポンスされる色ごとの星の数
+export type ColorStarCount = {
+  color: keyof AllColorStarCount;
+  stars: StarCount[];
+};
+
 export interface BookmarkerInfoResponse {
   name: string;
   profile_image_url: string;
@@ -11,16 +32,9 @@ export interface StarPageResponse {
 
 export interface StarPageEntry {
   uri: string;
-  stars: IStar[];
-  colored_stars: IColorStar[];
+  stars: StarCount[];
+  colored_stars: ColorStarCount[];
 }
-
-export type IStar = number | { quote: string; name: string };
-
-export type IColorStar = {
-  color: typeof ColorTypes;
-  stars: IStar[];
-};
 
 export interface BookmarksPageResponse {
   item: { bookmarks: Bookmark[] };
@@ -51,20 +65,6 @@ export interface Bookmark {
   comment: string;
 }
 
-export const ColorTypes = ["purple", "blue", "red", "green", "yellow"] as const;
-
-// export type IStarCount = Record<(typeof ColorTypes)[number], number>;
-
-export interface IStarCount {
-  yellow: number;
-  green: number;
-  red: number;
-  blue: number;
-  purple: number;
-}
-
-export const initalStarCount: IStarCount = { yellow: 0, green: 0, red: 0, blue: 0, purple: 0 };
-
 export interface IBookmark {
   eid: string;
   title: string;
@@ -76,7 +76,7 @@ export interface IBookmark {
   bookmarkDate: string;
   comment: string;
   image: string;
-  star: IStarCount;
+  star: AllColorStarCount;
 }
 
 export interface IBookmarker {
