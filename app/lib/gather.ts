@@ -6,7 +6,7 @@ import {
   type AllColorStarCount,
   type StarPageResponse,
 } from "@/app/lib/models";
-import { deepCopy, excludeProtocolFromURL, extractEIDFromURL, formatDateString } from "@/app/lib/util";
+import { deepCopy, excludeProtocolFromURL, extractEIDFromURL, formatUTC2AsiaTokyoDateString } from "@/app/lib/util";
 import { BOOKMARKS_PER_PAGE, STAR_COLOR_TYPES } from "@/app/constants";
 
 const entriesEndpoint = `https://s.hatena.ne.jp/entry.json`;
@@ -120,7 +120,7 @@ export class BookmarkStarGatherer {
     // この後の処理のため、配列でなくeidをkeyにしたdictでブックマーク情報を保持する
     const bookmarkResults: { [eid: string]: IBookmark } = {};
     for (const bookmark of bookmarks) {
-      const dateString = formatDateString(bookmark.created);
+      const dateString = formatUTC2AsiaTokyoDateString(bookmark.created);
       const commentURL = this.buildCommentURL(bookmark, dateString.replaceAll("-", ""));
       const bookmarksURL = this.buildBookmarksURL(bookmark);
 
