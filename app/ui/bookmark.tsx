@@ -7,9 +7,11 @@ export default function Bookmark({ username, bookmark }: { username: string; boo
   return (
     <div className="card card-compact w-full shadow-xl mt-8">
       <div className="flex items-center gap-2">
-        <figure className="shrink-0 w-24 md:w-52">
-          {bookmark.image && <Image src={bookmark.image} width={256} height={144} alt={bookmark.title} />}
-        </figure>
+        {bookmark.image && (
+          <figure className="shrink-0 w-24 md:w-52">
+            <Image src={bookmark.image} width={256} height={144} alt={bookmark.title} />
+          </figure>
+        )}
         <h2 className="card-title block p-2">
           <Link href={bookmark.entryURL} target="_blank" className="mr-2">
             {bookmark.title}

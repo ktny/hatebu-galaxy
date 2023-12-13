@@ -7,7 +7,7 @@ import { BOOKMARKS_PER_PAGE, STAR_COLOR_TYPES } from "@/app/constants";
 import { useState, useEffect, useCallback } from "react";
 import { deepCopy } from "@/app/lib/util";
 
-const pageChunk = 10;
+const pageChunk = 100;
 
 async function fetchBookmarkData(
   username: string,
