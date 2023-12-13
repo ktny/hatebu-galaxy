@@ -26,7 +26,7 @@ export default function Bookmark({ username, bookmark }: { username: string; boo
       >
         <p className="text-lg">{bookmark.comment}</p>
         <div className="flex justify-between">
-          <StarList starsCount={bookmark.star} displayIfZero={false}></StarList>
+          <StarList allColorStarCount={bookmark.star} forceCountDisplay={false}></StarList>
           <span className="shrink-0">{bookmark.bookmarkDate}</span>
         </div>
       </Link>

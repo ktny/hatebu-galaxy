@@ -110,7 +110,7 @@ export default function Bookmarks({ username, totalBookmarks }: { username: stri
     <section className="mt-4">
       <div>
         <div className="flex items-center gap-4">
-          <StarList starsCount={totalStars} displayIfZero={true}></StarList>
+          <StarList allColorStarCount={totalStars} forceCountDisplay={true}></StarList>
           <button
             className="btn btn-primary btn-sm shrink-0"
             onClick={() => {
