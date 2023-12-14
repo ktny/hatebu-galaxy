@@ -11,13 +11,14 @@ const pageChunk = 20;
 
 async function fetchBookmarkData(
   username: string,
-  page: number,
+  startPage: number,
   pageChunk: number,
   cache: RequestCache
-): Promise<IBookmarker> {
-  const res = await fetch(`/api/gather?username=${username}&page=${page}&pageChunk=${pageChunk}`, { cache });
-  const data = await res.json();
-  return data;
+): Promise<IBookmarker | undefined> {
+  const res = await fetch(`/api/gather?username=${username}&page=${startPage}&pageChunk=${pageChunk}`, { cache });
+  if (res.status < 400) {
+    return await res.json();
+  }
 }
 
 export default function Bookmarks({ username, totalBookmarks }: { username: string; totalBookmarks: number }) {
@@ -61,7 +62,13 @@ export default function Bookmarks({ username, totalBookmarks }: { username: stri
 
     while (hasNextPage) {
       const startPage = loopCount * pageChunk + 1;
+
+      // 数ページ分のブックマークデータを取得する
       const data = await fetchBookmarkData(username, startPage, pageChunk, cache);
+      if (data == undefined) {
+        continue;
+      }
+
       hasNextPage = data.hasNextPage;
       setBookmarks(bookmarks => bookmarks.concat(data.bookmarks));
       setTotalStars(totalStars => {
