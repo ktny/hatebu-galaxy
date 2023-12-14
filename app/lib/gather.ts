@@ -5,6 +5,7 @@ import {
   initalAllColorStarCount,
   type AllColorStarCount,
   type StarPageResponse,
+  IBookmarker,
 } from "@/app/lib/models";
 import { deepCopy, excludeProtocolFromURL, extractEIDFromURL, formatUTC2AsiaTokyoDateString } from "@/app/lib/util";
 import { BOOKMARKS_PER_PAGE, STAR_COLOR_TYPES } from "@/app/constants";
@@ -50,9 +51,14 @@ export class BookmarkStarGatherer {
    * @returns ブックマーク情報の配列、次のページがあるか
    */
   private async bulkGatherBookmarks(startPage: number, pageCount: number) {
-    const promises = [];
+    const promises: Promise<BookmarksPageResponse>[] = [];
     for (let page = startPage; page < startPage + pageCount; page++) {
-      promises.push(this.gatherBookmarks(page));
+      try {
+        promises.push(this.gatherBookmarks(page));
+      } catch (e) {
+        console.error(`gatherBookmarks(${page})`);
+        console.error(e);
+      }
     }
     const bookmarksPagesResponse = await Promise.all(promises);
 
@@ -107,11 +113,7 @@ export class BookmarkStarGatherer {
     // 一度に最大で fetchPageChunk * BOOKMARKS_PER_PAGE のブックマークを取得する
     const bulkResult = await this.bulkGatherBookmarks(page, pageChunk);
     const bookmarks = bulkResult.bookmarks;
-    const result: {
-      bookmarks: IBookmark[];
-      totalStars: AllColorStarCount;
-      hasNextPage: boolean;
-    } = {
+    const result: IBookmarker = {
       bookmarks: [],
       totalStars: deepCopy(initalAllColorStarCount),
       hasNextPage: bulkResult.hasNextPage,
