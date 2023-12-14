@@ -14,7 +14,12 @@ export default function Search() {
         placeholder="username"
         className="input input-bordered input-primary max-w-xs mr-2"
         value={username}
-        onChange={(e) => setUsername(e.target.value)}
+        onChange={e => setUsername(e.target.value)}
+        onKeyDown={e => {
+          if (e.key === "Enter") {
+            window.location.href = `/user/${username}`;
+          }
+        }}
       />
       <Link href={`/user/${username}`} style={{ pointerEvents: disabled ? "none" : "auto" }}>
         <button className="btn btn-primary" disabled={disabled}>
