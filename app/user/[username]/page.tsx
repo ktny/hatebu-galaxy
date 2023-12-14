@@ -17,8 +17,8 @@ export default async function Page({ params }: { params: { username: string } })
 
   return (
     <main className="flex md:justify-center">
-      <article className="max-w-screen-md p-4">
-        <div className="flex items-center gap-4 md:w-screen-md">
+      <article className="w-full md:max-w-screen-md p-4">
+        <div className="flex items-center gap-4">
           <div className="avatar w-16 h-16 shrink-0">
             <div className="rounded-xl">
               <Link href={userPage} target="_blank">

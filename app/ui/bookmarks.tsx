@@ -100,7 +100,7 @@ export default function Bookmarks({ username, totalBookmarks }: { username: stri
 
   if (progress === 0) {
     return (
-      <section className="flex justify-center mt-4">
+      <section className="w-full flex justify-center mt-4">
         <span className="loading loading-spinner loading-lg text-primary"></span>
       </section>
     );
