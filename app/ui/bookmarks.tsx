@@ -144,9 +144,9 @@ export default function Bookmarks({ username, totalBookmarks }: { username: stri
         {bookmarks
           .sort((a, b) => b.star.yellow - a.star.yellow)
           .slice(0, bookmarkCountForDisplay)
-          .map(bookmark => (
+          .map((bookmark, i) => (
             <li key={bookmark.eid}>
-              <Bookmark username={username} bookmark={bookmark}></Bookmark>
+              <Bookmark username={username} bookmark={bookmark} rank={i + 1}></Bookmark>
             </li>
           ))}
       </ul>
