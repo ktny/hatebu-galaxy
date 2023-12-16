@@ -17,7 +17,7 @@ const config: Config = {
   plugins: [
     require("@tailwindcss/typography"),
     require("daisyui"),
-    iconsPlugin({ collections: getIconCollections(["solar", "tabler"]) }),
+    iconsPlugin({ collections: getIconCollections(["solar"]) }),
   ],
   darkMode: "class",
   daisyui: {
