@@ -29,7 +29,7 @@ export default async function Page({ params }: { params: { username: string } })
             <div className="avatar w-16 h-16 shrink-0">
               <div className="rounded-xl">
                 <Link href={userPage} target="_blank">
-                  <Image src={user.profile_image_url} width={64} height={64} alt={username} />
+                  <Image src={user.profile_image_url} width={64} height={64} alt={username} priority />
                 </Link>
               </div>
             </div>

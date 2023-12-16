@@ -10,7 +10,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  // themeColor: 'black',
+  // themeColor: "black",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
@@ -21,7 +21,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="ja" suppressHydrationWarning>
       {/* dark:bg-black dark:text-white */}
-      <body>
+      <body className="min-h-screen">
         <Providers>
           <Header></Header>
           {children}
