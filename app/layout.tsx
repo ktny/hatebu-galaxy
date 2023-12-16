@@ -1,7 +1,6 @@
 import "./globals.css";
 import type { Metadata } from "next";
 import Header from "./ui/header";
-import { Providers } from "./providers";
 import { Viewport } from "next";
 
 export const metadata: Metadata = {
@@ -10,7 +9,6 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  // themeColor: "black",
   width: "device-width",
   initialScale: 1,
   maximumScale: 1,
@@ -20,12 +18,9 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="ja" suppressHydrationWarning>
-      {/* dark:bg-black dark:text-white */}
       <body className="min-h-screen">
-        <Providers>
-          <Header></Header>
-          {children}
-        </Providers>
+        <Header></Header>
+        {children}
       </body>
     </html>
   );
