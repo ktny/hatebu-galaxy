@@ -25,7 +25,7 @@ export default function Bookmark({
           <Link href={bookmark.entryURL} target="_blank" className="line-clamp-3">
             {bookmark.title}
           </Link>
-          <Link href={bookmark.bookmarksURL} target="_blank" className="badge badge-accent shrink-0">
+          <Link href={bookmark.entryBookmarkURL} target="_blank" className="badge badge-accent shrink-0">
             {bookmark.bookmarkCount} user
           </Link>
         </h2>

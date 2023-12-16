@@ -8,11 +8,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   const username = req.query["username"] as string;
-  const page = Number(req.query["page"]);
+  const startPage = Number(req.query["startPage"]);
   const pageChunk = Number(req.query["pageChunk"]);
 
   const gatherer = new BookmarkStarGatherer(username);
 
-  const data = await gatherer.gather(page, pageChunk);
+  const data = await gatherer.gather(startPage, pageChunk);
   res.status(200).json(data);
 }

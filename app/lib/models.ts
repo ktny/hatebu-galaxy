@@ -84,3 +84,7 @@ export interface IBookmarker {
   totalStars: AllColorStarCount;
   hasNextPage: boolean;
 }
+
+export interface BookmarksMap {
+  [eid: string]: IBookmark;
+}

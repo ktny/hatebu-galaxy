@@ -6,24 +6,46 @@ import {
   type AllColorStarCount,
   type StarPageResponse,
   IBookmarker,
+  StarPageEntry,
+  BookmarksMap,
 } from "@/app/lib/models";
 import { deepCopy, excludeProtocolFromURL, extractEIDFromURL, formatUTC2AsiaTokyoDateString } from "@/app/lib/util";
-import { BOOKMARKS_PER_PAGE, STAR_COLOR_TYPES } from "@/app/constants";
+import { BOOKMARKS_PER_PAGE } from "@/app/constants";
 
-const entriesEndpoint = `https://s.hatena.ne.jp/entry.json`;
+const starPageAPIEndpoint = `https://s.hatena.ne.jp/entry.json`;
 
 export class BookmarkStarGatherer {
   username: string;
+  result: IBookmarker = {
+    bookmarks: [],
+    totalStars: deepCopy(initalAllColorStarCount),
+    hasNextPage: false,
+  };
 
   constructor(username: string) {
     this.username = username;
   }
 
-  private buildURL(baseURL: string, uris: string[]) {
-    const url = new URL(baseURL);
+  /**
+   * エントリのブックマーク一覧のURLを返す
+   * @param bookmark
+   * @returns
+   */
+  private buildEntryBookmarkURL(bookmark: Bookmark): string {
+    const urlWithoutHTTP = excludeProtocolFromURL(bookmark.url);
+    return `https://b.hatena.ne.jp/entry/s/${urlWithoutHTTP}`;
+  }
+
+  /**
+   * スター取得用APIのリクエストURLを返す
+   * @param commentURLList
+   * @returns スター取得用APIのリクエストURL
+   */
+  private buildStarPageRequestURL(commentURLList: string[]): string {
+    const url = new URL(starPageAPIEndpoint);
     const params = new URLSearchParams();
-    for (const uri of uris) {
-      params.append("uri", uri);
+    for (const commentURL of commentURLList) {
+      params.append("uri", commentURL);
     }
     params.append("no_comments", "1");
     url.search = params.toString();
@@ -36,7 +58,7 @@ export class BookmarkStarGatherer {
    * @param page 取得するページ番号
    * @returns ブックマーク情報の配列
    */
-  private async gatherBookmarks(page: number = 1) {
+  private async gatherBookmarks(page: number = 1): Promise<BookmarksPageResponse> {
     const url = `https://b.hatena.ne.jp/api/users/${this.username}/bookmarks?page=${page}`;
     const response = await fetch(url);
     const data: BookmarksPageResponse = await response.json();
@@ -47,12 +69,14 @@ export class BookmarkStarGatherer {
    * ユーザーの複数ページのブックマーク情報を取得する
    *
    * @param startPage 取得する開始ページ番号
-   * @param pageCount 取得するページ数
+   * @param pageChunk 取得するページ数
    * @returns ブックマーク情報の配列、次のページがあるか
    */
-  private async bulkGatherBookmarks(startPage: number, pageCount: number) {
+  private async bulkGatherBookmarks(startPage: number, pageChunk: number) {
     const promises: Promise<BookmarksPageResponse>[] = [];
-    for (let page = startPage; page < startPage + pageCount; page++) {
+
+    // Promise.all用の配列にブックマーク取得用のリクエストを追加;
+    for (let page = startPage; page < startPage + pageChunk; page++) {
       try {
         promises.push(this.gatherBookmarks(page));
       } catch (e) {
@@ -60,125 +84,123 @@ export class BookmarkStarGatherer {
         console.error(e);
       }
     }
+
+    // ブックマークページAPIのレスポンスを取得する
     const bookmarksPagesResponse = await Promise.all(promises);
 
-    const bookmarks: Bookmark[] = [];
-    let hasNextPage = false;
+    // ブックマークコメント単体のURLを生成する
+    const buildCommentURL = (eid: string, date: string) =>
+      `https://b.hatena.ne.jp/${this.username}/${date}#bookmark-${eid}`;
+
+    // ブックマークページAPIのレスポンスからブックマーク情報を整理する
     for (const bookmarksPageResponse of bookmarksPagesResponse) {
-      bookmarks.push(...bookmarksPageResponse.item.bookmarks);
-      hasNextPage = !!bookmarksPageResponse.pager.next;
-      if (!hasNextPage) {
+      for (const bookmark of bookmarksPageResponse.item.bookmarks) {
+        const dateString = formatUTC2AsiaTokyoDateString(bookmark.created);
+        const bookmarkResult: IBookmark = {
+          eid: bookmark.location_id,
+          title: bookmark.entry.title,
+          bookmarkCount: bookmark.entry.total_bookmarks,
+          category: bookmark.entry.category.path,
+          entryURL: bookmark.url,
+          bookmarkDate: dateString,
+          comment: bookmark.comment,
+          image: bookmark.entry.image,
+          star: initalAllColorStarCount,
+          entryBookmarkURL: this.buildEntryBookmarkURL(bookmark),
+          commentURL: buildCommentURL(bookmark.location_id, dateString.replaceAll("-", "")),
+        };
+
+        this.result.bookmarks.push(bookmarkResult);
+      }
+
+      // 次ページがなければブックマーク情報の整理を終了する
+      this.result.hasNextPage = !!bookmarksPageResponse.pager.next;
+      if (!this.result.hasNextPage) {
         break;
       }
     }
-
-    return {
-      bookmarks,
-      hasNextPage,
-    };
   }
 
-  private buildCommentURL(bookmark: Bookmark, date: string) {
-    return `https://b.hatena.ne.jp/${this.username}/${date}#bookmark-${bookmark.location_id}`;
-  }
-
-  private async getStarCounts(bookmarkResults: { [eid: number]: IBookmark }) {
-    const commentURLs = Object.values(bookmarkResults).map(bookmark => bookmark.commentURL);
-
+  /**
+   * ブックマークのスター数を取得してブックマーク情報と紐づける
+   */
+  private async bulkGatherStarCount() {
+    const commentURLList = this.result.bookmarks.map(bookmark => bookmark.commentURL);
     const promises: Promise<Response>[] = [];
-    for (let i = 0; i < commentURLs.length; i += BOOKMARKS_PER_PAGE) {
-      const sliceUris = commentURLs.slice(i, i + BOOKMARKS_PER_PAGE);
-      const entriesURL = this.buildURL(entriesEndpoint, sliceUris);
-      promises.push(fetch(entriesURL));
+
+    // Promise.all用の配列にスター取得用のリクエストを追加
+    for (let i = 0; i < commentURLList.length; i += BOOKMARKS_PER_PAGE) {
+      const commentURLListForStar = commentURLList.slice(i, i + BOOKMARKS_PER_PAGE);
+      const starPageRequestURL = this.buildStarPageRequestURL(commentURLListForStar);
+      promises.push(fetch(starPageRequestURL));
     }
 
-    const entries = [];
+    // ブックマークごとにつけられたスターを一度に取得
     const responses = await Promise.all(promises);
+
+    const bookmarksMapByEid: BookmarksMap = this.result.bookmarks.reduce((acc, bookmark) => {
+      acc[bookmark.eid] = bookmark;
+      return acc;
+    }, {} as BookmarksMap);
+
+    // スター数を集計してブックマーク情報と紐づける
     for (const response of responses) {
-      const entriesData: StarPageResponse = await response.json();
-      if (entriesData.entries?.length > 0) {
-        entries.push(...entriesData.entries);
-      }
-    }
+      const starPageResponse: StarPageResponse = await response.json();
 
-    return entries;
-  }
-
-  private buildBookmarksURL(bookmark: Bookmark) {
-    const urlWithoutHTTP = excludeProtocolFromURL(bookmark.url);
-    return `https://b.hatena.ne.jp/entry/s/${urlWithoutHTTP}`;
-  }
-
-  async gather(page: number, pageChunk: number) {
-    // 一度に最大で fetchPageChunk * BOOKMARKS_PER_PAGE のブックマークを取得する
-    const bulkResult = await this.bulkGatherBookmarks(page, pageChunk);
-    const bookmarks = bulkResult.bookmarks;
-    const result: IBookmarker = {
-      bookmarks: [],
-      totalStars: deepCopy(initalAllColorStarCount),
-      hasNextPage: bulkResult.hasNextPage,
-    };
-
-    // この後の処理のため、配列でなくeidをkeyにしたdictでブックマーク情報を保持する
-    const bookmarkResults: { [eid: string]: IBookmark } = {};
-    for (const bookmark of bookmarks) {
-      const dateString = formatUTC2AsiaTokyoDateString(bookmark.created);
-      const commentURL = this.buildCommentURL(bookmark, dateString.replaceAll("-", ""));
-      const bookmarksURL = this.buildBookmarksURL(bookmark);
-
-      bookmarkResults[bookmark.location_id] = {
-        eid: bookmark.location_id,
-        title: bookmark.entry.title,
-        bookmarkCount: bookmark.entry.total_bookmarks,
-        category: bookmark.entry.category.path,
-        entryURL: bookmark.url,
-        bookmarkDate: dateString,
-        comment: bookmark.comment,
-        image: bookmark.entry.image,
-        star: deepCopy(initalAllColorStarCount),
-        bookmarksURL,
-        commentURL,
-      };
-    }
-
-    const starData = await this.getStarCounts(bookmarkResults);
-
-    for (const entry of starData) {
-      const starCount: AllColorStarCount = deepCopy(initalAllColorStarCount);
-
-      for (const star of entry.stars) {
-        if (typeof star === "number") {
-          starCount.yellow += star;
-        } else {
-          starCount.yellow++;
+      for (const starPageEntry of starPageResponse.entries) {
+        const starCount = this.totalizeAllColorStarCountByEntry(starPageEntry);
+        const eid = extractEIDFromURL(starPageEntry.uri);
+        if (eid !== null) {
+          bookmarksMapByEid[eid]["star"] = starCount;
         }
       }
+    }
+  }
 
-      if (entry.colored_stars) {
-        for (const colorStar of entry.colored_stars) {
-          for (const star of colorStar.stars) {
-            if (typeof star === "number") {
-              starCount[colorStar.color] += star;
-            } else {
-              starCount[colorStar.color]++;
-            }
+  /**
+   * ブックマークごとの全色のスター数を集計し最終結果にも追加する
+   * @param entry スター集計用エントリー
+   */
+  private totalizeAllColorStarCountByEntry(entry: StarPageEntry): AllColorStarCount {
+    // ブックマークごとのスター集計用の変数を作成
+    const starCount: AllColorStarCount = deepCopy(initalAllColorStarCount);
+
+    // 黄色スターを集計する
+    for (const star of entry.stars) {
+      if (typeof star === "number") {
+        starCount.yellow += star;
+        this.result.totalStars.yellow += star;
+      } else {
+        starCount.yellow++;
+        this.result.totalStars.yellow++;
+      }
+    }
+
+    // カラースターを集計する
+    if (entry.colored_stars) {
+      for (const colorStar of entry.colored_stars) {
+        for (const star of colorStar.stars) {
+          if (typeof star === "number") {
+            starCount[colorStar.color] += star;
+            this.result.totalStars[colorStar.color] += star;
+          } else {
+            starCount[colorStar.color]++;
+            this.result.totalStars[colorStar.color]++;
           }
         }
       }
-
-      const eid = extractEIDFromURL(entry.uri);
-      if (eid !== null) {
-        bookmarkResults[eid] = { ...bookmarkResults[eid], star: starCount };
-        STAR_COLOR_TYPES.forEach(starType => {
-          result.totalStars[starType] += starCount[starType];
-        });
-      }
     }
 
-    Object.values(bookmarkResults).forEach(bookmarkResult => {
-      result.bookmarks.push(bookmarkResult);
-    });
+    return starCount;
+  }
 
-    return result;
+  async gather(startPage: number, pageChunk: number) {
+    // 一度に最大で fetchPageChunk * BOOKMARKS_PER_PAGE のブックマークを取得する
+    await this.bulkGatherBookmarks(startPage, pageChunk);
+
+    // 各ブックマークのスターを取得
+    await this.bulkGatherStarCount();
+
+    return this.result;
   }
 }
