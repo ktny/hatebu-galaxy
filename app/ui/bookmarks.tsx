@@ -15,7 +15,12 @@ async function fetchBookmarkData(
   pageChunk: number,
   cache: RequestCache
 ): Promise<IBookmarker | undefined> {
-  const res = await fetch(`/api/gather?username=${username}&startPage=${startPage}&pageChunk=${pageChunk}`, { cache });
+  const isReload = cache === "reload";
+  const res = await fetch(
+    `/api/gather?username=${username}&startPage=${startPage}&pageChunk=${pageChunk}&isReload=${isReload}`,
+    { cache }
+  );
+
   if (res.status < 400) {
     return await res.json();
   }

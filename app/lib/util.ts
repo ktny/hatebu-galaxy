@@ -52,3 +52,13 @@ export function extractEIDFromURL(url: string): string | null {
 export function deepCopy(object: any) {
   return JSON.parse(JSON.stringify(object));
 }
+
+/**
+ * 数値を先頭0埋めした文字列で返す
+ * @param num
+ * @param maxLength
+ * @returns
+ */
+export function padNumber(num: number, maxLength: number): string {
+  return String(num).padStart(maxLength, "0");
+}
