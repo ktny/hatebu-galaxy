@@ -3,7 +3,8 @@ import { Viewport } from "next";
 import "@/app/globals.css";
 import Header from "@/app/ui/header";
 import Footer from "@/app/ui/footer";
-import Analytics from "@/app/ui/analytics";
+import { Analytics } from "@vercel/analytics/react";
+import GoogleAnalytics from "@/app/ui/analytics";
 
 export const metadata: Metadata = {
   title: "はてなギャラクシー",
@@ -21,10 +22,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="ja" suppressHydrationWarning>
       <body className="min-h-screen flex flex-col">
-        <Header></Header>
+        <Header />
         <main className="flex flex-1 justify-center mt-4 p-4">{children}</main>
-        <Footer></Footer>
-        <Analytics></Analytics>
+        <Footer />
+        <Analytics />
+        <GoogleAnalytics />
       </body>
     </html>
   );
