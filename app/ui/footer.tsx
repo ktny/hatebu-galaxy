@@ -3,7 +3,7 @@ import Image from "next/image";
 
 export default function Footer() {
   return (
-    <footer className="footer footer-center p-10 bg-base-200 text-base-content rounded">
+    <footer className="footer footer-center p-10 bg-base-100 text-base-content rounded">
       <nav className="grid grid-flow-col gap-4">
         <Link href="/about" className="link link-hover">
           はてなギャラクシーとは
