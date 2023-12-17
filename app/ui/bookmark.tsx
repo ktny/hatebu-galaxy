@@ -16,13 +16,13 @@ export default function Bookmark({
   return (
     <div className="card card-compact bg-neutral w-full shadow-xl mt-8" style={{ overflowWrap: "anywhere" }}>
       <div className="indicator-item badge badge-secondary absolute top-2 left-2">{rank}</div>
-      <div className="flex items-center gap-2">
+      <div className="flex items-center">
         {bookmark.image && (
           <figure className="shrink-0 w-24 md:w-52">
             <Image src={bookmark.image} width={256} height={144} alt={bookmark.title} />
           </figure>
         )}
-        <h2 className="card-title block p-2">
+        <h2 className="card-title block p-4">
           <Link href={bookmark.entryURL} target="_blank" className="line-clamp-3">
             {bookmark.title}
           </Link>

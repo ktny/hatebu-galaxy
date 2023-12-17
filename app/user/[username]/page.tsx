@@ -23,8 +23,8 @@ export default async function Page({ params }: { params: { username: string } })
 
   if (user !== undefined) {
     return (
-      <main className="flex md:justify-center">
-        <article className="w-full md:max-w-screen-md p-4">
+      <>
+        <article className="w-full md:max-w-screen-md">
           <div className="flex items-center gap-4">
             <div className="avatar w-16 h-16 shrink-0">
               <div className="rounded-xl">
@@ -42,7 +42,7 @@ export default async function Page({ params }: { params: { username: string } })
         </article>
 
         <ScrollTop />
-      </main>
+      </>
     );
   }
 }
