@@ -73,7 +73,7 @@ export interface IBookmark {
   entryURL: string;
   entryBookmarkURL: string;
   commentURL: string;
-  bookmarkDate: string;
+  created: number;
   comment: string;
   image: string;
   star: AllColorStarCount;

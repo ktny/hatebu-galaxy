@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import StarList from "@/app/ui/starList";
 import { IBookmark } from "@/app/lib/models";
+import { formatDateString } from "@/app/lib/util";
 
 export default function Bookmark({
   username,
@@ -38,7 +39,7 @@ export default function Bookmark({
         <p className="text-lg">{bookmark.comment}</p>
         <div className="flex justify-between">
           <StarList allColorStarCount={bookmark.star} forceCountDisplay={false}></StarList>
-          <span className="shrink-0">{bookmark.bookmarkDate}</span>
+          <span className="shrink-0">{formatDateString(new Date(bookmark.created))}</span>
         </div>
       </Link>
     </div>

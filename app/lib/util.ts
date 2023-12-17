@@ -5,16 +5,22 @@ import { utcToZonedTime } from "date-fns-tz";
  * @param dateString UTCの日付文字列（ex. 2023-12-13T13:00:27Z）
  * @returns YYYY-MM-DD形式のAsia/Tokyoの日付文字列
  */
-export function formatUTC2AsiaTokyoDateString(dateString: string): string {
+export function convertUTC2AsiaTokyo(dateString: string): Date {
   // 文字列をAsia/TokyoのDateオブジェクトに変換
-  const originalDate = utcToZonedTime(new Date(dateString), "Asia/Tokyo");
+  return utcToZonedTime(new Date(dateString), "Asia/Tokyo");
+}
 
+/**
+ * UTC時間の日付文字列をYYYY-MM-DD形式のAsia/Tokyoの日付文字列に変換する
+ * @param dateString UTCの日付文字列（ex. 2023-12-13T13:00:27Z）
+ * @returns YYYY-MM-DD形式のAsia/Tokyoの日付文字列
+ */
+export function formatDateString(date: Date): string {
   // 年月日を取得
-  const year = originalDate.getFullYear();
-  const month = (originalDate.getMonth() + 1).toString().padStart(2, "0"); // 月は0から始まるため+1
-  const day = originalDate.getDate().toString().padStart(2, "0");
-  const date = `${year}-${month}-${day}`;
-  return date;
+  const year = date.getFullYear();
+  const month = (date.getMonth() + 1).toString().padStart(2, "0"); // 月は0から始まるため+1
+  const day = date.getDate().toString().padStart(2, "0");
+  return `${year}-${month}-${day}`;
 }
 
 /**

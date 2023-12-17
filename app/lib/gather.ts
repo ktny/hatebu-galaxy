@@ -9,7 +9,13 @@ import {
   StarPageEntry,
   BookmarksMap,
 } from "@/app/lib/models";
-import { deepCopy, excludeProtocolFromURL, extractEIDFromURL, formatUTC2AsiaTokyoDateString } from "@/app/lib/util";
+import {
+  convertUTC2AsiaTokyo,
+  deepCopy,
+  excludeProtocolFromURL,
+  extractEIDFromURL,
+  formatDateString,
+} from "@/app/lib/util";
 import { BOOKMARKS_PER_PAGE } from "@/app/constants";
 import { setTimeout } from "timers/promises";
 
@@ -96,14 +102,16 @@ export class BookmarkStarGatherer {
     // ブックマークページAPIのレスポンスからブックマーク情報を整理する
     for (const bookmarksPageResponse of bookmarksPagesResponse) {
       for (const bookmark of bookmarksPageResponse.item.bookmarks) {
-        const dateString = formatUTC2AsiaTokyoDateString(bookmark.created);
+        const createdDate = convertUTC2AsiaTokyo(bookmark.created);
+        const dateString = formatDateString(createdDate);
+
         const bookmarkResult: IBookmark = {
           eid: bookmark.location_id,
           title: bookmark.entry.title,
           bookmarkCount: bookmark.entry.total_bookmarks,
           category: bookmark.entry.category.path,
           entryURL: bookmark.url,
-          bookmarkDate: dateString,
+          created: createdDate.getTime(),
           comment: bookmark.comment,
           image: bookmark.entry.image,
           star: initalAllColorStarCount,
