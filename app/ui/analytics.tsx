@@ -8,7 +8,7 @@ export default function GoogleAnalytics() {
   const pathname = usePathname();
 
   return (
-    <div>
+    <>
       <Script src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`} />
       <Script
         id="google-analytics"
@@ -23,6 +23,6 @@ export default function GoogleAnalytics() {
         `,
         }}
       ></Script>
-    </div>
+    </>
   );
 }
