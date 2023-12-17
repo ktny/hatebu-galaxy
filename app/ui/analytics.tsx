@@ -2,24 +2,27 @@
 
 import Script from "next/script";
 import { usePathname } from "next/navigation";
+import { GA_MEASUREMENT_ID } from "@/app/config";
 
 export default function GoogleAnalytics() {
   const pathname = usePathname();
-  const GA_MEASUREMENT_ID = "G-NMTLSQVC0B";
 
   return (
     <div>
       <Script src={`https://www.googletagmanager.com/gtag/js?id=${GA_MEASUREMENT_ID}`} />
-      <Script id="google-analytics">
-        {`
+      <Script
+        id="google-analytics"
+        dangerouslySetInnerHTML={{
+          __html: `
           window.dataLayer = window.dataLayer || [];
           function gtag(){dataLayer.push(arguments);}
           gtag('js', new Date());
-          gtag('config', ${GA_MEASUREMENT_ID}, {
-            page_path: ${pathname},
+          gtag('config', "${GA_MEASUREMENT_ID}", {
+            page_path: "${pathname}",
           });
-        `}
-      </Script>
+        `,
+        }}
+      ></Script>
     </div>
   );
 }
