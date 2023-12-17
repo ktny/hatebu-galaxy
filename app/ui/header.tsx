@@ -7,9 +7,6 @@ export default function Header() {
             はてなギャラクシー
           </a>
         </div>
-        <div>
-          <span className="i-solar-moon-bold w-10 h-10"></span>
-        </div>
       </div>
     </header>
   );

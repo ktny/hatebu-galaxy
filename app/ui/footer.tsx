@@ -20,27 +20,13 @@ export default function Footer() {
         </Link>
       </nav>
       <nav>
-        <div className="grid grid-flow-col gap-4" suppressHydrationWarning>
-          <a
-            href="https://b.hatena.ne.jp/entry/s/hatebu-galaxy.vercel.app"
-            target="_blank"
-            className="hatena-bookmark-button"
-            data-hatena-bookmark-layout="touch"
-            data-hatena-bookmark-width="24"
-            data-hatena-bookmark-height="24"
-            title="このエントリーをはてなブックマークに追加"
-            suppressHydrationWarning
-          >
-            <Image
-              className="bg-neutral"
-              src="/hatenabookmark_symbolmark.png"
-              alt="このエントリーをはてなブックマークに追加"
-              width="24"
-              height="24"
-              style={{ border: "none" }}
-              priority
-            />
-          </a>
+        <div className="grid grid-flow-col gap-4">
+          <Link href="https://b.hatena.ne.jp/entry/s/hatebu-galaxy.vercel.app" target="_blank">
+            <Image src="/hatebu_icon.png" alt="はてなブックマーク" width="24" height="24" priority />
+          </Link>
+          <Link href="https://github.com/ktny/hatebu-galaxy" target="_blank">
+            <Image src="/github_icon.svg" alt="GitHub" width="24" height="24" priority />
+          </Link>
         </div>
       </nav>
       <aside>
