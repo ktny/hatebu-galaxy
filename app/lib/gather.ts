@@ -11,6 +11,7 @@ import {
 } from "@/app/lib/models";
 import { deepCopy, excludeProtocolFromURL, extractEIDFromURL, formatUTC2AsiaTokyoDateString } from "@/app/lib/util";
 import { BOOKMARKS_PER_PAGE } from "@/app/constants";
+import { setTimeout } from "timers/promises";
 
 const starPageAPIEndpoint = `https://s.hatena.ne.jp/entry.json`;
 
@@ -195,6 +196,9 @@ export class BookmarkStarGatherer {
   }
 
   async gather(startPage: number, pageChunk: number) {
+    // 1s sleep
+    await setTimeout(1000);
+
     // 一度に最大で fetchPageChunk * BOOKMARKS_PER_PAGE のブックマークを取得する
     await this.bulkGatherBookmarks(startPage, pageChunk);
 
