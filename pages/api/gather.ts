@@ -13,7 +13,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const username = req.query["username"] as string;
   const startPage = Number(req.query["startPage"]);
   const pageChunk = Number(req.query["pageChunk"]);
-  const cache = req.query["cache"] as string;
+  const cache = req.headers["X-CACHE-GALAXY"] as string;
 
   const start = padNumber(startPage, 5);
   const end = padNumber(startPage + pageChunk - 1, 5);
