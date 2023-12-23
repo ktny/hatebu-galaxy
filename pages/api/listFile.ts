@@ -1,6 +1,12 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { listS3Objects } from "@/app/lib/aws";
 
+/**
+ *
+ * @param req
+ * @param res
+ * @returns
+ */
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   // GET以外のリクエストを許可しない
   if (req.method?.toLocaleLowerCase() !== "get") {

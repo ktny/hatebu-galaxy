@@ -240,15 +240,14 @@ export class BookmarkStarGatherer {
           }
         }
       } else {
-        data = {
-          bookmarks,
-        };
+        data = { bookmarks };
       }
 
       // 取得したデータはファイルに保存してキャッシュする
       uploadS3(key, data);
     }
 
-    return this.result;
+    const bookmarks = Object.values(this.result.bookmarks).flat();
+    return { bookmarks };
   }
 }
