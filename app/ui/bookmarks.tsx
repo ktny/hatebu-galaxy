@@ -1,6 +1,6 @@
 "use client";
 
-import { IBookmark, AllColorStarCount, initalAllColorStarCount, IBookmarker } from "@/app/lib/models";
+import { IBookmark, AllColorStarCount, initalAllColorStarCount, IBookmarker, MonthlyData } from "@/app/lib/models";
 import Bookmark from "./bookmark";
 import StarList from "./starList";
 import { BOOKMARKS_PER_PAGE, STAR_COLOR_TYPES } from "@/app/constants";
@@ -9,6 +9,14 @@ import { deepCopy } from "@/app/lib/util";
 
 const pageChunk = 20;
 
+/**
+ * ブックマークデータを取得する
+ * @param username
+ * @param startPage
+ * @param pageChunk
+ * @param cache
+ * @returns
+ */
 async function fetchBookmarkData(
   username: string,
   startPage: number,
@@ -23,6 +31,50 @@ async function fetchBookmarkData(
   if (res.status < 400) {
     return await res.json();
   }
+}
+
+/**
+ * ユーザーのブックマーク結果ファイル一覧を取得する
+ * @param username
+ * @returns
+ */
+async function listBookmarkFileName(username: string): Promise<string[]> {
+  const res = await fetch(`/api/listFile?username=${username}`);
+
+  if (res.status < 400) {
+    return await res.json();
+  }
+  return [];
+}
+
+/**
+ * ファイルからユーザーの月ごとのブックマークを取得する
+ * @param fileName
+ * @returns
+ */
+async function fetchBookmarksFromFile(fileNames: string[]): Promise<IBookmark[]> {
+  const promises: Promise<Response>[] = [];
+
+  // Promise.all用の配列にブックマーク取得用のリクエストを追加;
+  for (const fileName of fileNames) {
+    try {
+      promises.push(fetch(`/api/fetchFile?key=${fileName}`, { cache: "force-cache" }));
+    } catch (e) {
+      console.error(`/api/fetchFile?key=${fileName}`);
+      console.error(e);
+    }
+  }
+
+  // ブックマークページAPIのレスポンスを取得する
+  const responses = await Promise.all(promises);
+
+  let result: IBookmark[] = [];
+  for (const response of responses) {
+    const data = await response.json();
+    result = result.concat(data.bookmarks);
+  }
+
+  return result;
 }
 
 export default function Bookmarks({ username, totalBookmarks }: { username: string; totalBookmarks: number }) {
@@ -57,45 +109,23 @@ export default function Bookmarks({ username, totalBookmarks }: { username: stri
 
   /**
    * ブックマークを再取得する
-   * @param cache
    */
-  async function reloadBookmarks(cache: RequestCache = "force-cache") {
+  async function fetchCachedBookmarks() {
     initState();
-    let loopCount = 0;
-    let hasNextPage = true;
 
-    while (hasNextPage) {
-      const startPage = loopCount * pageChunk + 1;
+    const fileNames = await listBookmarkFileName(username);
+    const allFetchedBookmarks = await fetchBookmarksFromFile(fileNames);
 
-      // 数ページ分のブックマークデータを取得する
-      const data = await fetchBookmarkData(username, startPage, pageChunk, cache);
-      if (data == undefined) {
-        continue;
+    setBookmarks(allFetchedBookmarks);
+    setTotalStars(totalStars => {
+      const _totalStars = deepCopy(totalStars);
+      for (const bookmark of allFetchedBookmarks) {
+        STAR_COLOR_TYPES.forEach(starType => (_totalStars[starType] += bookmark.star[starType]));
       }
+      return _totalStars;
+    });
 
-      hasNextPage = data.hasNextPage;
-
-      const monthlyBookmarks = Object.values(data.bookmarks).flat();
-      setBookmarks(bookmarks => bookmarks.concat(monthlyBookmarks));
-
-      for (const bookmark of monthlyBookmarks) {
-        STAR_COLOR_TYPES.forEach(starType => {});
-        bookmark.star;
-      }
-
-      setTotalStars(totalStars => {
-        const _totalStars = deepCopy(totalStars);
-        for (const bookmark of monthlyBookmarks) {
-          STAR_COLOR_TYPES.forEach(starType => {
-            _totalStars[starType] += bookmark.star[starType];
-          });
-        }
-        return _totalStars;
-      });
-
-      loopCount += 1;
-      updateProgress(loopCount, hasNextPage);
-    }
+    updateProgress(1, false);
   }
 
   /**
@@ -111,7 +141,12 @@ export default function Bookmarks({ username, totalBookmarks }: { username: stri
   }, []);
 
   useEffect(() => {
+    // 過去のキャッシュ済ブックマークがあれば取得する
+    fetchCachedBookmarks();
+
+    // 直近1年のブックマークを更新する
     reloadBookmarks();
+
     document.addEventListener("scroll", handleScroll, { passive: true });
 
     return () => {
