@@ -74,12 +74,22 @@ export default function Bookmarks({ username, totalBookmarks }: { username: stri
       }
 
       hasNextPage = data.hasNextPage;
-      setBookmarks(bookmarks => bookmarks.concat(data.bookmarks));
+
+      const monthlyBookmarks = Object.values(data.bookmarks).flat();
+      setBookmarks(bookmarks => bookmarks.concat(monthlyBookmarks));
+
+      for (const bookmark of monthlyBookmarks) {
+        STAR_COLOR_TYPES.forEach(starType => {});
+        bookmark.star;
+      }
+
       setTotalStars(totalStars => {
         const _totalStars = deepCopy(totalStars);
-        STAR_COLOR_TYPES.forEach(starType => {
-          _totalStars[starType] += data.totalStars[starType];
-        });
+        for (const bookmark of monthlyBookmarks) {
+          STAR_COLOR_TYPES.forEach(starType => {
+            _totalStars[starType] += bookmark.star[starType];
+          });
+        }
         return _totalStars;
       });
 

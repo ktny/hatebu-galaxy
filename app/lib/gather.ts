@@ -8,6 +8,8 @@ import {
   IBookmarker,
   StarPageEntry,
   BookmarksMap,
+  MonthlyData,
+  StarCount,
 } from "@/app/lib/models";
 import {
   convertUTC2AsiaTokyo,
@@ -18,14 +20,15 @@ import {
 } from "@/app/lib/util";
 import { BOOKMARKS_PER_PAGE } from "@/app/constants";
 import { setTimeout } from "timers/promises";
+import { CLOUDFRONT_DOMAIN } from "../config";
+import { uploadS3 } from "./aws";
 
 const starPageAPIEndpoint = `https://s.hatena.ne.jp/entry.json`;
 
 export class BookmarkStarGatherer {
   username: string;
   result: IBookmarker = {
-    bookmarks: [],
-    totalStars: deepCopy(initalAllColorStarCount),
+    bookmarks: {},
     hasNextPage: false,
   };
 
@@ -114,12 +117,17 @@ export class BookmarkStarGatherer {
           created: createdDate.getTime(),
           comment: bookmark.comment,
           image: bookmark.entry.image,
-          star: initalAllColorStarCount,
+          star: deepCopy(initalAllColorStarCount),
           entryBookmarkURL: this.buildEntryBookmarkURL(bookmark),
           commentURL: buildCommentURL(bookmark.location_id, dateString.replaceAll("-", "")),
         };
 
-        this.result.bookmarks.push(bookmarkResult);
+        const yyyymm = dateString.replace("-", "").slice(0, 6);
+        if (yyyymm in this.result.bookmarks) {
+          this.result.bookmarks[yyyymm].push(bookmarkResult);
+        } else {
+          this.result.bookmarks[yyyymm] = [bookmarkResult];
+        }
       }
 
       // 次ページがなければブックマーク情報の整理を終了する
@@ -134,7 +142,8 @@ export class BookmarkStarGatherer {
    * ブックマークのスター数を取得してブックマーク情報と紐づける
    */
   private async bulkGatherStarCount() {
-    const commentURLList = this.result.bookmarks.map(bookmark => bookmark.commentURL);
+    const bookmarks = Object.values(this.result.bookmarks).flat();
+    const commentURLList = bookmarks.map(bookmark => bookmark.commentURL);
     const promises: Promise<Response>[] = [];
 
     // Promise.all用の配列にスター取得用のリクエストを追加
@@ -147,7 +156,7 @@ export class BookmarkStarGatherer {
     // ブックマークごとにつけられたスターを一度に取得
     const responses = await Promise.all(promises);
 
-    const bookmarksMapByEid: BookmarksMap = this.result.bookmarks.reduce((acc, bookmark) => {
+    const bookmarksMapByEid: BookmarksMap = bookmarks.reduce((acc, bookmark) => {
       acc[bookmark.eid] = bookmark;
       return acc;
     }, {} as BookmarksMap);
@@ -157,45 +166,39 @@ export class BookmarkStarGatherer {
       const starPageResponse: StarPageResponse = await response.json();
 
       for (const starPageEntry of starPageResponse.entries) {
-        const starCount = this.totalizeAllColorStarCountByEntry(starPageEntry);
         const eid = extractEIDFromURL(starPageEntry.uri);
         if (eid !== null) {
-          bookmarksMapByEid[eid]["star"] = starCount;
+          const starCount = this.totalizeAllColorStarCountByEntry(bookmarksMapByEid[eid].star, starPageEntry);
+          bookmarksMapByEid[eid].star = starCount;
         }
       }
     }
   }
 
+  private incrementStarCount(allColorStarCount: AllColorStarCount, color: keyof AllColorStarCount, count: StarCount) {
+    if (typeof count === "number") {
+      allColorStarCount[color] += count;
+    } else {
+      allColorStarCount[color]++;
+    }
+  }
+
   /**
-   * ブックマークごとの全色のスター数を集計し最終結果にも追加する
+   * ブックマークごとの全色のスター数を集計する
+   * @param starCount ックマークごとのスター集計用変数
    * @param entry スター集計用エントリー
    */
-  private totalizeAllColorStarCountByEntry(entry: StarPageEntry): AllColorStarCount {
-    // ブックマークごとのスター集計用の変数を作成
-    const starCount: AllColorStarCount = deepCopy(initalAllColorStarCount);
-
+  private totalizeAllColorStarCountByEntry(starCount: AllColorStarCount, entry: StarPageEntry): AllColorStarCount {
     // 黄色スターを集計する
     for (const star of entry.stars) {
-      if (typeof star === "number") {
-        starCount.yellow += star;
-        this.result.totalStars.yellow += star;
-      } else {
-        starCount.yellow++;
-        this.result.totalStars.yellow++;
-      }
+      this.incrementStarCount(starCount, "yellow", star);
     }
 
     // カラースターを集計する
     if (entry.colored_stars) {
       for (const colorStar of entry.colored_stars) {
         for (const star of colorStar.stars) {
-          if (typeof star === "number") {
-            starCount[colorStar.color] += star;
-            this.result.totalStars[colorStar.color] += star;
-          } else {
-            starCount[colorStar.color]++;
-            this.result.totalStars[colorStar.color]++;
-          }
+          this.incrementStarCount(starCount, colorStar.color, star);
         }
       }
     }
@@ -212,6 +215,39 @@ export class BookmarkStarGatherer {
 
     // 各ブックマークのスターを取得
     await this.bulkGatherStarCount();
+
+    for (const yyyymm of Object.keys(this.result.bookmarks)) {
+      const bookmarks = this.result.bookmarks[yyyymm];
+
+      const key = `${this.username}/${yyyymm}.json`;
+
+      const filepath = `${CLOUDFRONT_DOMAIN}/${key}`;
+      const response = await fetch(filepath);
+
+      let data: MonthlyData;
+      // すでに月ファイルがある場合
+      // そのファイルのブックマークと重複する場合は今回ので上書き、ない場合は追加を行う
+      // そのファイルのtotalStarに追加を行う
+      if (response.status === 200) {
+        data = await response.json();
+
+        for (const newBookmark of bookmarks) {
+          const foundIndex = data.bookmarks.findIndex(bookmark => bookmark.eid === newBookmark.eid);
+          if (foundIndex === -1) {
+            data.bookmarks.push(newBookmark);
+          } else {
+            data.bookmarks[foundIndex] = newBookmark;
+          }
+        }
+      } else {
+        data = {
+          bookmarks,
+        };
+      }
+
+      // 取得したデータはファイルに保存してキャッシュする
+      uploadS3(key, data);
+    }
 
     return this.result;
   }

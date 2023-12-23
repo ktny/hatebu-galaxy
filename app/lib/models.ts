@@ -80,9 +80,20 @@ export interface IBookmark {
 }
 
 export interface IBookmarker {
-  bookmarks: IBookmark[];
-  totalStars: AllColorStarCount;
+  bookmarks: BookmarksMonthlyMap;
   hasNextPage: boolean;
+}
+
+export interface MonthlyData {
+  bookmarks: IBookmark[];
+}
+
+export interface BookmarksMonthlyMap {
+  [yyyymm: string]: IBookmark[];
+}
+
+export interface MonthlyAllColorStarCount {
+  [yyyymm: string]: AllColorStarCount;
 }
 
 export interface BookmarksMap {
