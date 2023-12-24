@@ -20,7 +20,7 @@ export default function Bookmark({
         {bookmark.image && (
           <Link href={bookmark.entryURL} target="_blank" className="hover:opacity-50">
             <figure className="shrink-0 w-24 md:w-52">
-              <Image src={bookmark.image} width={256} height={144} alt={bookmark.title} />
+              <img src={bookmark.image} alt={bookmark.title} width={256} height={144} />
             </figure>
           </Link>
         )}
