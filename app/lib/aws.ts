@@ -1,10 +1,13 @@
 import { S3, CloudFront } from "aws-sdk";
 import { CLOUDFRONT_ID } from "@/app/config";
 
+const REGION = "ap-northeast-1";
+const BUCKET = "hatebu-galaxy";
+
 const s3 = new S3({
   accessKeyId: process.env.AWS_ACCESS_KEY,
   secretAccessKey: process.env.AWS_SECRET_KEY,
-  region: "ap-northeast-1",
+  region: REGION,
 });
 
 const cloudfront = new CloudFront({
@@ -13,20 +16,58 @@ const cloudfront = new CloudFront({
 });
 
 /**
+ * S3バケット内のオブジェクトリストを取得する
+ * @param prefix バケット内のパス
+ */
+export async function listS3Objects(prefix: string = "") {
+  const params: AWS.S3.ListObjectsV2Request = { Bucket: BUCKET, Prefix: prefix };
+  const response = await s3.listObjectsV2(params).promise();
+  return response.Contents;
+}
+
+/**
+ * S3からデータをダウンロードする
+ * @param key バケット内のオブジェクトのパス
+ */
+export async function downloadFromS3(key: string): Promise<any> {
+  const params = { Bucket: BUCKET, Key: key };
+
+  return new Promise((resolve, reject) => {
+    s3.getObject(params, (err, data) => {
+      if (err) {
+        console.error(err, err.stack);
+        reject(err);
+      } else {
+        console.log(`File download successfully: ${key}`);
+        const json = data.Body?.toString();
+        if (json) {
+          resolve(JSON.parse(json));
+        }
+        reject(`File body undefined: ${key}`);
+      }
+    });
+  });
+}
+
+/**
  * S3にデータをアップロードする
  * @param key バケット内のオブジェクトのパス
  * @param data アップロードするjsonオブジェクト
  */
-export function uploadS3(key: string, data: object) {
-  const jsonString = JSON.stringify(data, null, 2);
-  const params = { Bucket: "hatebu-galaxy", Key: key, Body: jsonString };
+export async function uploadToS3(key: string, data: object | null = null) {
+  const jsonString = data === null ? "" : JSON.stringify(data, null, 2);
+  const params = { Bucket: BUCKET, Key: key, Body: jsonString };
 
-  s3.putObject(params, err => {
-    if (err) {
-      console.error(err, err.stack);
-    } else {
-      console.log(`File uploaded successfully: ${key}`);
-    }
+  return new Promise((resolve, reject) => {
+    s3.putObject(params, err => {
+      if (err) {
+        console.error(err, err.stack);
+        reject(err);
+      } else {
+        console.log(`File upload successfully: ${key}`);
+        resolve(true);
+      }
+    });
   });
 }
 
