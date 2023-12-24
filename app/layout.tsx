@@ -9,6 +9,8 @@ import GoogleAnalytics from "@/app/ui/analytics";
 export const metadata: Metadata = {
   title: "はてなギャラクシー",
   description: "はてなブックマークで獲得したスターをランキングで閲覧できるサイトです",
+  icons:
+    "data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%2210 0 100 100%22><text y=%22.90em%22 font-size=%2290%22>⭐</text></svg>",
 };
 
 export const viewport: Viewport = {
