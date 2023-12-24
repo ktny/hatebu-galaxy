@@ -26,6 +26,7 @@ const starPageAPIEndpoint = `https://s.hatena.ne.jp/entry.json`;
 export class BookmarkStarGatherer {
   username: string;
   monthlyBookmarks: MonthlyBookmarks = {};
+  hasNextPage = false;
 
   constructor(username: string) {
     this.username = username;
@@ -91,7 +92,7 @@ export class BookmarkStarGatherer {
     }
 
     // ブックマークページAPIのレスポンスを取得する
-    const bookmarksPagesResponse = await Promise.all(promises);
+    const bookmarksPagesResponse = await Promise.allSettled(promises);
 
     // ブックマークコメント単体のURLを生成する
     const buildCommentURL = (eid: string, date: string) =>
@@ -99,7 +100,10 @@ export class BookmarkStarGatherer {
 
     // ブックマークページAPIのレスポンスからブックマーク情報を整理する
     for (const bookmarksPageResponse of bookmarksPagesResponse) {
-      for (const bookmark of bookmarksPageResponse.item.bookmarks) {
+      if (bookmarksPageResponse.status === "rejected") {
+        continue;
+      }
+      for (const bookmark of bookmarksPageResponse.value.item.bookmarks) {
         const createdDate = convertUTC2AsiaTokyo(bookmark.created);
         const dateString = formatDateString(createdDate);
 
@@ -126,7 +130,8 @@ export class BookmarkStarGatherer {
       }
 
       // 次ページがなければブックマーク情報の整理を終了する
-      if (!bookmarksPageResponse.pager.next) {
+      this.hasNextPage = !!bookmarksPageResponse.value.pager.next;
+      if (!this.hasNextPage) {
         break;
       }
     }
@@ -148,7 +153,7 @@ export class BookmarkStarGatherer {
     }
 
     // ブックマークごとにつけられたスターを一度に取得
-    const responses = await Promise.all(promises);
+    const responses = await Promise.allSettled(promises);
 
     const bookmarksMapByEid: BookmarksMap = bookmarks.reduce((acc, bookmark) => {
       acc[bookmark.eid] = bookmark;
@@ -157,7 +162,10 @@ export class BookmarkStarGatherer {
 
     // スター数を集計してブックマーク情報と紐づける
     for (const response of responses) {
-      const starPageResponse: StarPageResponse = await response.json();
+      if (response.status === "rejected") {
+        continue;
+      }
+      const starPageResponse: StarPageResponse = await response.value.json();
 
       for (const starPageEntry of starPageResponse.entries) {
         const eid = extractEIDFromURL(starPageEntry.uri);
@@ -222,7 +230,7 @@ export class BookmarkStarGatherer {
           }
         }
       } catch (err) {
-        console.error(err);
+        console.error(`not found s3 file: ${key}`);
         cachedBookmarks = monthlyBookmarks;
       }
 
@@ -244,6 +252,14 @@ export class BookmarkStarGatherer {
     // 月ごとのブックマークデータをS3にアップロードする
     await this.uploadMonthlyBookmarksToS3();
 
-    return Object.values(this.monthlyBookmarks).flat();
+    // 次ページがなければ全取得完了のファイルをS3にアップロードする
+    if (!this.hasNextPage) {
+      await uploadToS3(`${this.username}/completed`);
+    }
+
+    return {
+      bookmarks: Object.values(this.monthlyBookmarks).flat(),
+      hasNextPage: this.hasNextPage,
+    };
   }
 }

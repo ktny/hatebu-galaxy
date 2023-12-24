@@ -54,16 +54,20 @@ export async function downloadFromS3(key: string): Promise<any> {
  * @param key バケット内のオブジェクトのパス
  * @param data アップロードするjsonオブジェクト
  */
-export function uploadToS3(key: string, data: object) {
-  const jsonString = JSON.stringify(data, null, 2);
+export async function uploadToS3(key: string, data: object | null = null) {
+  const jsonString = data === null ? "" : JSON.stringify(data, null, 2);
   const params = { Bucket: BUCKET, Key: key, Body: jsonString };
 
-  s3.putObject(params, err => {
-    if (err) {
-      console.error(err, err.stack);
-    } else {
-      console.log(`File upload successfully: ${key}`);
-    }
+  return new Promise((resolve, reject) => {
+    s3.putObject(params, err => {
+      if (err) {
+        console.error(err, err.stack);
+        reject(err);
+      } else {
+        console.log(`File upload successfully: ${key}`);
+        resolve(true);
+      }
+    });
   });
 }
 

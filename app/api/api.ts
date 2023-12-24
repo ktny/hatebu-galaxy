@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { IBookmark, UserInfoResponse } from "@/app/lib/models";
+import { IBookmark, UserInfoResponse, fetchBookmarksFromHatenaResponse } from "@/app/lib/models";
 
 /**
  * はてなからユーザー情報を取得する
@@ -18,29 +18,6 @@ export async function fetchUserInfo(username: string): Promise<UserInfoResponse 
 }
 
 /**
- * はてなからユーザーの月ごとのブックマークを取得する
- * @param username
- * @param startPage
- * @param pageChunk
- * @param cache
- * @returns
- */
-export async function fetchBookmarksFromHatena(
-  username: string,
-  startPage: number,
-  pageChunk: number
-): Promise<IBookmark[]> {
-  const res = await fetch(`/api/gather?username=${username}&startPage=${startPage}&pageChunk=${pageChunk}`, {
-    cache: "no-store",
-  });
-
-  if (res.status < 400) {
-    return await res.json();
-  }
-  return [];
-}
-
-/**
  * ブックマーク結果ファイル一覧を取得する
  * @param username
  * @returns
@@ -55,6 +32,30 @@ export async function listBookmarkFileName(username: string): Promise<string[]> 
 }
 
 /**
+ * はてなからユーザーの月ごとのブックマークを取得する
+ * @param username
+ * @param startPage
+ * @param pageChunk
+ * @param cache
+ * @returns
+ */
+export async function fetchBookmarksFromHatena(
+  username: string,
+  startPage: number,
+  pageChunk: number,
+  cache: RequestCache
+): Promise<fetchBookmarksFromHatenaResponse> {
+  const res = await fetch(`/api/gather?username=${username}&startPage=${startPage}&pageChunk=${pageChunk}`, {
+    cache,
+  });
+
+  if (res.status < 400) {
+    return await res.json();
+  }
+  return { bookmarks: [], hasNextPage: false };
+}
+
+/**
  * ファイルからユーザーの月ごとのブックマークを取得する
  * @param fileName
  * @returns
@@ -65,7 +66,7 @@ export async function fetchBookmarksFromFile(fileNames: string[]): Promise<IBook
   // Promise.all用の配列にブックマーク取得用のリクエストを追加;
   for (const fileName of fileNames) {
     try {
-      promises.push(fetch(`/api/fetchFile?key=${fileName}`, { cache: "no-store" }));
+      promises.push(fetch(`/api/fetchFile?key=${fileName}`, { cache: "force-cache" }));
     } catch (e) {
       console.error(`/api/fetchFile?key=${fileName}`);
       console.error(e);
@@ -73,11 +74,14 @@ export async function fetchBookmarksFromFile(fileNames: string[]): Promise<IBook
   }
 
   // ブックマークページAPIのレスポンスを取得する
-  const responses = await Promise.all(promises);
+  const responses = await Promise.allSettled(promises);
 
   let result: IBookmark[] = [];
   for (const response of responses) {
-    const bookmarks: IBookmark[] = await response.json();
+    if (response.status === "rejected") {
+      continue;
+    }
+    const bookmarks: IBookmark[] = await response.value.json();
     result = result.concat(bookmarks);
   }
 

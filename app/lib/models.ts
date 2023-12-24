@@ -85,6 +85,11 @@ export interface IBookmark {
   star: AllColorStarCount;
 }
 
+export interface fetchBookmarksFromHatenaResponse {
+  bookmarks: IBookmark[];
+  hasNextPage: boolean;
+}
+
 export interface MonthlyBookmarks {
   [yyyymm: string]: IBookmark[];
 }

@@ -11,6 +11,8 @@ import { fetchBookmarksFromFile, fetchBookmarksFromHatena, listBookmarkFileName 
 const pageChunk = 20;
 
 export default function Bookmarks({ username, totalBookmarks }: { username: string; totalBookmarks: number }) {
+  const completedFileName = `${username}/completed`;
+
   const [bookmarks, setBookmarks] = useState<IBookmark[]>([]);
   const [progress, setProgress] = useState(0);
   const [totalStars, setTotalStars] = useState<AllColorStarCount>(deepCopy(initalAllColorStarCount));
@@ -100,9 +102,9 @@ export default function Bookmarks({ username, totalBookmarks }: { username: stri
     // キャッシュがあれば直近20ページの更新のみ行う
     if (cached) {
       // 数ページ分のブックマークデータを取得する
-      const newBookmarks = await fetchBookmarksFromHatena(username, 1, pageChunk);
+      const newBookmarks = await fetchBookmarksFromHatena(username, 1, 5, "no-store");
 
-      updateBookmarkDiff(newBookmarks);
+      updateBookmarkDiff(newBookmarks.bookmarks);
       setProgress(100);
 
       // キャッシュがなければ全ブックマークの取得を行う（通常は初回）
@@ -113,15 +115,15 @@ export default function Bookmarks({ username, totalBookmarks }: { username: stri
         const startPage = loopCount * pageChunk + 1;
 
         // 数ページ分のブックマークデータを取得する
-        const newBookmarks = await fetchBookmarksFromHatena(username, startPage, pageChunk);
-        setBookmarks(bookmarks => bookmarks.concat(newBookmarks));
-        calcTotalStarCount(newBookmarks.map(b => b.star));
+        const newBookmarks = await fetchBookmarksFromHatena(username, startPage, pageChunk, "no-store");
+        setBookmarks(bookmarks => bookmarks.concat(newBookmarks.bookmarks));
+        calcTotalStarCount(newBookmarks.bookmarks.map(b => b.star));
 
         loopCount += 1;
         updateProgressByFetchBookmarkCount(loopCount);
 
-        // ブックマークが取得上限に満たない場合は終了
-        if (newBookmarks.length < 400) {
+        // 次のページがない場合は終了
+        if (!newBookmarks.hasNextPage) {
           setProgress(100);
           break;
         }
@@ -133,8 +135,16 @@ export default function Bookmarks({ username, totalBookmarks }: { username: stri
    * キャッシュ済のブックマークを取得する
    */
   async function fetchCachedBookmarks(): Promise<boolean> {
+    // S3バケットからファイル名を取得し、completedファイルがなければ全キャッシュ済でないとして返す
     const fileNames = await listBookmarkFileName(username);
-    const allFetchedBookmarks = await fetchBookmarksFromFile(fileNames);
+    if (!fileNames.includes(completedFileName)) {
+      return false;
+    }
+
+    // ブックマークが0件であれば全キャッシュ済でないとして返す
+    const allFetchedBookmarks = await fetchBookmarksFromFile(
+      fileNames.filter(fileName => fileName !== completedFileName)
+    );
     if (allFetchedBookmarks.length === 0) {
       return false;
     }
