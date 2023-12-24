@@ -29,7 +29,6 @@ export class BookmarkStarGatherer {
   username: string;
   result: IBookmarker = {
     bookmarks: {},
-    hasNextPage: false,
   };
 
   constructor(username: string) {
@@ -131,8 +130,7 @@ export class BookmarkStarGatherer {
       }
 
       // 次ページがなければブックマーク情報の整理を終了する
-      this.result.hasNextPage = !!bookmarksPageResponse.pager.next;
-      if (!this.result.hasNextPage) {
+      if (!bookmarksPageResponse.pager.next) {
         break;
       }
     }

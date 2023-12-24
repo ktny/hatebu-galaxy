@@ -1,6 +1,6 @@
 "use client";
 
-import { IBookmark, AllColorStarCount, initalAllColorStarCount, IBookmarker, MonthlyData } from "@/app/lib/models";
+import { IBookmark, AllColorStarCount, initalAllColorStarCount, MonthlyData, BookmarksMap } from "@/app/lib/models";
 import Bookmark from "./bookmark";
 import StarList from "./starList";
 import { BOOKMARKS_PER_PAGE, STAR_COLOR_TYPES } from "@/app/constants";
@@ -92,16 +92,13 @@ export default function Bookmarks({ username, totalBookmarks }: { username: stri
   }
 
   /**
-   * 進捗バーを更新する
+   * 現在のブックマーク取得回数から進捗バーを更新する
    * @param loopCount
-   * @param hasNextPage
    */
-  function updateProgress(loopCount: number, hasNextPage: boolean) {
+  function updateProgressByFetchBookmarkCount(loopCount: number) {
     const bookmarkCountFetched = loopCount * BOOKMARKS_PER_PAGE * pageChunk;
     const progress =
-      !hasNextPage || bookmarkCountFetched > totalBookmarks
-        ? 100
-        : Math.floor((bookmarkCountFetched / totalBookmarks) * 100);
+      bookmarkCountFetched > totalBookmarks ? 100 : Math.floor((bookmarkCountFetched / totalBookmarks) * 100);
     setProgress(progress);
   }
 
@@ -112,7 +109,6 @@ export default function Bookmarks({ username, totalBookmarks }: { username: stri
   async function reloadBookmarks(cached: boolean = false) {
     // initState();
     let loopCount = 0;
-    let hasNextPage = true;
 
     // キャッシュがあれば直近20ページの更新のみ行う
     if (cached) {
@@ -122,11 +118,50 @@ export default function Bookmarks({ username, totalBookmarks }: { username: stri
         return;
       }
 
-      updateProgress(1, false);
+      setBookmarks(bookmarks => {
+        const bookmarksMapByEid: BookmarksMap = bookmarks.reduce((acc, bookmark) => {
+          acc[bookmark.eid] = bookmark;
+          return acc;
+        }, {} as BookmarksMap);
+
+        const totalStarCountDiff = deepCopy(initalAllColorStarCount);
+
+        for (const newBookmark of data.bookmarks) {
+          // キャッシュから取得した星の数と、直近更新した星の数の差を更新する
+          const oldBookmark = bookmarksMapByEid[newBookmark.eid];
+
+          //
+          if (oldBookmark === undefined) {
+            console.log(newBookmark.eid);
+            console.log(oldBookmark);
+            continue;
+          }
+
+          for (const color of STAR_COLOR_TYPES) {
+            const diff = newBookmark.star[color] - oldBookmark.star[color];
+            totalStarCountDiff[color] += diff;
+          }
+
+          // 直近取得したブックマークのみ、キャッシュのものから置き換える
+          bookmarksMapByEid[newBookmark.eid] = newBookmark;
+        }
+
+        setTotalStars(totalStars => {
+          const _totalStars = deepCopy(totalStars);
+          STAR_COLOR_TYPES.forEach(starType => {
+            _totalStars[starType] += totalStarCountDiff[starType];
+          });
+          return _totalStars;
+        });
+
+        return Object.values(bookmarksMapByEid);
+      });
+
+      setProgress(100);
 
       // キャッシュがなければ全ブックマークの取得を行う
     } else {
-      while (hasNextPage) {
+      while (true) {
         const startPage = loopCount * pageChunk + 1;
 
         // 数ページ分のブックマークデータを取得する
@@ -148,11 +183,11 @@ export default function Bookmarks({ username, totalBookmarks }: { username: stri
         });
 
         loopCount += 1;
-        updateProgress(loopCount, hasNextPage);
+        updateProgressByFetchBookmarkCount(loopCount);
 
         // ブックマークが取得上限に満たない場合は終了
         if (data.bookmarks.length < 400) {
-          updateProgress(loopCount, false);
+          setProgress(100);
           break;
         }
       }
@@ -167,6 +202,9 @@ export default function Bookmarks({ username, totalBookmarks }: { username: stri
 
     const fileNames = await listBookmarkFileName(username);
     const allFetchedBookmarks = await fetchBookmarksFromFile(fileNames);
+    if (allFetchedBookmarks.length === 0) {
+      return false;
+    }
 
     setBookmarks(allFetchedBookmarks);
     setTotalStars(totalStars => {
@@ -178,7 +216,8 @@ export default function Bookmarks({ username, totalBookmarks }: { username: stri
     });
 
     // キャッシュ済ブックマークが存在したかどうかを返す
-    return allFetchedBookmarks.length > 0;
+    setProgress(99);
+    return true;
   }
 
   /**

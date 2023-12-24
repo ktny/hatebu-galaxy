@@ -81,7 +81,6 @@ export interface IBookmark {
 
 export interface IBookmarker {
   bookmarks: BookmarksMonthlyMap;
-  hasNextPage: boolean;
 }
 
 export interface MonthlyData {
