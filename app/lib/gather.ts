@@ -20,7 +20,7 @@ import {
 import { BOOKMARKS_PER_PAGE } from "@/app/constants";
 import { setTimeout } from "timers/promises";
 import { CLOUDFRONT_DOMAIN } from "../config";
-import { uploadS3 } from "./aws";
+import { downloadFromS3, uploadToS3 } from "./aws";
 
 const starPageAPIEndpoint = `https://s.hatena.ne.jp/entry.json`;
 
@@ -213,34 +213,30 @@ export class BookmarkStarGatherer {
 
     for (const yyyymm of Object.keys(this.monthlyBookmarks)) {
       const monthlyBookmarks = this.monthlyBookmarks[yyyymm];
-
       const key = `${this.username}/${yyyymm}.json`;
+      let cachedBookmarks: IBookmark[];
 
-      const filepath = `${CLOUDFRONT_DOMAIN}/${key}`;
-      const response = await fetch(filepath);
+      try {
+        cachedBookmarks = await downloadFromS3(key);
 
-      let bookmarks: IBookmark[];
-
-      // すでに月ファイルがある場合
-      // そのファイルのブックマークと重複する場合は今回ので上書き、ない場合は追加を行う
-      // そのファイルのtotalStarに追加を行う
-      if (response.status === 200) {
-        bookmarks = await response.json();
-
+        // すでに月ファイルがある場合
+        // そのファイルのブックマークと重複する場合は今回ので上書き、ない場合は追加を行う
+        // そのファイルのtotalStarに追加を行う
         for (const newBookmark of monthlyBookmarks) {
-          const foundIndex = bookmarks.findIndex(bookmark => bookmark.eid === newBookmark.eid);
+          const foundIndex = cachedBookmarks.findIndex(bookmark => bookmark.eid === newBookmark.eid);
           if (foundIndex === -1) {
-            bookmarks.push(newBookmark);
+            cachedBookmarks.push(newBookmark);
           } else {
-            bookmarks[foundIndex] = newBookmark;
+            cachedBookmarks[foundIndex] = newBookmark;
           }
         }
-      } else {
-        bookmarks = monthlyBookmarks;
+      } catch (err) {
+        console.error(err);
+        cachedBookmarks = monthlyBookmarks;
       }
 
       // 取得したデータはファイルに保存してキャッシュする
-      uploadS3(key, bookmarks);
+      uploadToS3(key, cachedBookmarks);
     }
 
     return Object.values(this.monthlyBookmarks).flat();

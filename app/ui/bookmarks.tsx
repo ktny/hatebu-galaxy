@@ -53,7 +53,7 @@ async function fetchBookmarksFromFile(fileNames: string[]): Promise<IBookmark[]>
   // Promise.all用の配列にブックマーク取得用のリクエストを追加;
   for (const fileName of fileNames) {
     try {
-      promises.push(fetch(`/api/fetchFile?key=${fileName}`, { cache: "force-cache" }));
+      promises.push(fetch(`/api/fetchFile?key=${fileName}`, { cache: "no-store" }));
     } catch (e) {
       console.error(`/api/fetchFile?key=${fileName}`);
       console.error(e);
@@ -65,8 +65,8 @@ async function fetchBookmarksFromFile(fileNames: string[]): Promise<IBookmark[]>
 
   let result: IBookmark[] = [];
   for (const response of responses) {
-    const data = await response.json();
-    result = result.concat(data.bookmarks);
+    const bookmarks: IBookmark[] = await response.json();
+    result = result.concat(bookmarks);
   }
 
   return result;
@@ -126,16 +126,12 @@ export default function Bookmarks({ username, totalBookmarks }: { username: stri
           // キャッシュから取得した星の数と、直近更新した星の数の差を更新する
           const oldBookmark = bookmarksMapByEid[newBookmark.eid];
 
-          //
-          if (oldBookmark === undefined) {
-            console.log(newBookmark.eid);
-            console.log(oldBookmark);
-            continue;
-          }
-
           for (const color of STAR_COLOR_TYPES) {
-            const diff = newBookmark.star[color] - oldBookmark.star[color];
-            totalStarCountDiff[color] += diff;
+            if (oldBookmark === undefined) {
+              totalStarCountDiff[color] += newBookmark.star[color];
+            } else {
+              totalStarCountDiff[color] += newBookmark.star[color] - oldBookmark.star[color];
+            }
           }
 
           // 直近取得したブックマークのみ、キャッシュのものから置き換える
@@ -153,10 +149,13 @@ export default function Bookmarks({ username, totalBookmarks }: { username: stri
         return Object.values(bookmarksMapByEid);
       });
 
+      console.log(bookmarks);
+
       setProgress(100);
 
       // キャッシュがなければ全ブックマークの取得を行う
     } else {
+      let test = [];
       while (true) {
         const startPage = loopCount * pageChunk + 1;
 
@@ -165,13 +164,18 @@ export default function Bookmarks({ username, totalBookmarks }: { username: stri
 
         setBookmarks(bookmarks => bookmarks.concat(newBookmarks));
 
+        console.log(newBookmarks);
+
         setTotalStars(totalStars => {
           const _totalStars = deepCopy(totalStars);
+          // console.log(newBookmarks);
+          test = test.concat(newBookmarks);
           for (const bookmark of newBookmarks) {
             STAR_COLOR_TYPES.forEach(starType => {
               _totalStars[starType] += bookmark.star[starType];
             });
           }
+          console.log(test.sort((a, b) => a.created - b.created));
           return _totalStars;
         });
 
@@ -200,8 +204,12 @@ export default function Bookmarks({ username, totalBookmarks }: { username: stri
     }
 
     setBookmarks(allFetchedBookmarks);
+
     setTotalStars(totalStars => {
       const _totalStars = deepCopy(totalStars);
+
+      const a = deepCopy(allFetchedBookmarks.sort((a, b) => a.created - b.created));
+      console.log(a);
       for (const bookmark of allFetchedBookmarks) {
         STAR_COLOR_TYPES.forEach(starType => (_totalStars[starType] += bookmark.star[starType]));
       }
@@ -228,7 +236,6 @@ export default function Bookmarks({ username, totalBookmarks }: { username: stri
   useEffect(() => {
     // 過去のキャッシュ済ブックマークがあれば取得する
     fetchCachedBookmarks().then(cached => {
-      console.log(cached);
       // 直近のブックマークを更新する
       reloadBookmarks(cached);
     });

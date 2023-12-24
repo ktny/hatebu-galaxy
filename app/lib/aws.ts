@@ -26,11 +26,35 @@ export async function listS3Objects(prefix: string = "") {
 }
 
 /**
+ * S3からデータをダウンロードする
+ * @param key バケット内のオブジェクトのパス
+ */
+export async function downloadFromS3(key: string): Promise<any> {
+  const params = { Bucket: BUCKET, Key: key };
+
+  return new Promise((resolve, reject) => {
+    s3.getObject(params, (err, data) => {
+      if (err) {
+        console.error(err, err.stack);
+        reject(err);
+      } else {
+        console.log(`File download successfully: ${key}`);
+        const json = data.Body?.toString();
+        if (json) {
+          resolve(JSON.parse(json));
+        }
+        reject(`File body undefined: ${key}`);
+      }
+    });
+  });
+}
+
+/**
  * S3にデータをアップロードする
  * @param key バケット内のオブジェクトのパス
  * @param data アップロードするjsonオブジェクト
  */
-export function uploadS3(key: string, data: object) {
+export function uploadToS3(key: string, data: object) {
   const jsonString = JSON.stringify(data, null, 2);
   const params = { Bucket: BUCKET, Key: key, Body: jsonString };
 
@@ -38,7 +62,7 @@ export function uploadS3(key: string, data: object) {
     if (err) {
       console.error(err, err.stack);
     } else {
-      console.log(`File uploaded successfully: ${key}`);
+      console.log(`File upload successfully: ${key}`);
     }
   });
 }
