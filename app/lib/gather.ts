@@ -7,7 +7,6 @@ import {
   type StarPageResponse,
   StarPageEntry,
   BookmarksMap,
-  BookmarkData,
   StarCount,
   MonthlyBookmarks,
 } from "@/app/lib/models";
@@ -213,37 +212,37 @@ export class BookmarkStarGatherer {
     await this.bulkGatherStarCount();
 
     for (const yyyymm of Object.keys(this.monthlyBookmarks)) {
-      const bookmarks = this.monthlyBookmarks[yyyymm];
+      const monthlyBookmarks = this.monthlyBookmarks[yyyymm];
 
       const key = `${this.username}/${yyyymm}.json`;
 
       const filepath = `${CLOUDFRONT_DOMAIN}/${key}`;
       const response = await fetch(filepath);
 
-      let data: BookmarkData;
+      let bookmarks: IBookmark[];
+
       // すでに月ファイルがある場合
       // そのファイルのブックマークと重複する場合は今回ので上書き、ない場合は追加を行う
       // そのファイルのtotalStarに追加を行う
       if (response.status === 200) {
-        data = await response.json();
+        bookmarks = await response.json();
 
-        for (const newBookmark of bookmarks) {
-          const foundIndex = data.bookmarks.findIndex(bookmark => bookmark.eid === newBookmark.eid);
+        for (const newBookmark of monthlyBookmarks) {
+          const foundIndex = bookmarks.findIndex(bookmark => bookmark.eid === newBookmark.eid);
           if (foundIndex === -1) {
-            data.bookmarks.push(newBookmark);
+            bookmarks.push(newBookmark);
           } else {
-            data.bookmarks[foundIndex] = newBookmark;
+            bookmarks[foundIndex] = newBookmark;
           }
         }
       } else {
-        data = { bookmarks };
+        bookmarks = monthlyBookmarks;
       }
 
       // 取得したデータはファイルに保存してキャッシュする
-      uploadS3(key, data);
+      uploadS3(key, bookmarks);
     }
 
-    const bookmarks = Object.values(this.monthlyBookmarks).flat();
-    return { bookmarks };
+    return Object.values(this.monthlyBookmarks).flat();
   }
 }

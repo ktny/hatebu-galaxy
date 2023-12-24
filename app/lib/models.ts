@@ -19,23 +19,27 @@ export type ColorStarCount = {
   stars: StarCount[];
 };
 
-export interface BookmarkerInfoResponse {
+// ブックマーカー情報APIのレスポンス
+export interface UserInfoResponse {
   name: string;
   profile_image_url: string;
   total_bookmarks: number;
   private: boolean;
 }
 
+// ブックマークごとのスター数取得APIのレスポンス
 export interface StarPageResponse {
   entries: StarPageEntry[];
 }
 
+// ブックマークごとのスター数
 export interface StarPageEntry {
   uri: string;
   stars: StarCount[];
   colored_stars: ColorStarCount[];
 }
 
+// ブックマークページAPIのレスポンス
 export interface BookmarksPageResponse {
   item: { bookmarks: Bookmark[] };
   pager: {
@@ -44,6 +48,7 @@ export interface BookmarksPageResponse {
   };
 }
 
+// はてなからのブックマーク形式
 export interface Bookmark {
   created: string;
   user: {
@@ -65,6 +70,7 @@ export interface Bookmark {
   comment: string;
 }
 
+// ギャラクシー内で扱うブックマーク形式
 export interface IBookmark {
   eid: string;
   title: string;
@@ -77,10 +83,6 @@ export interface IBookmark {
   comment: string;
   image: string;
   star: AllColorStarCount;
-}
-
-export interface BookmarkData {
-  bookmarks: IBookmark[];
 }
 
 export interface MonthlyBookmarks {

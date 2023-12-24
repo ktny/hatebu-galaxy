@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
-import { BookmarkerInfoResponse } from "@/app/lib/models";
+import { UserInfoResponse } from "@/app/lib/models";
 
-export default async function fetchUserInfo(username: string): Promise<BookmarkerInfoResponse | undefined> {
+export default async function fetchUserInfo(username: string): Promise<UserInfoResponse | undefined> {
   const url = `https://b.hatena.ne.jp/api/internal/cambridge/user/${username}`;
   const response = await fetch(url, { next: { revalidate: 86400 } });
   if (response.status === 200) {

@@ -1,10 +1,10 @@
 "use client";
 
-import { IBookmark, AllColorStarCount, initalAllColorStarCount, BookmarkData, BookmarksMap } from "@/app/lib/models";
+import { IBookmark, AllColorStarCount, initalAllColorStarCount, BookmarksMap } from "@/app/lib/models";
 import Bookmark from "./bookmark";
 import StarList from "./starList";
 import { BOOKMARKS_PER_PAGE, STAR_COLOR_TYPES } from "@/app/constants";
-import { useState, useEffect, useCallback, cache } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { deepCopy } from "@/app/lib/util";
 
 const pageChunk = 20;
@@ -17,11 +17,7 @@ const pageChunk = 20;
  * @param cache
  * @returns
  */
-async function fetchBookmarksFromHatena(
-  username: string,
-  startPage: number,
-  pageChunk: number
-): Promise<BookmarkData | undefined> {
+async function fetchBookmarksFromHatena(username: string, startPage: number, pageChunk: number): Promise<IBookmark[]> {
   const res = await fetch(`/api/gather?username=${username}&startPage=${startPage}&pageChunk=${pageChunk}`, {
     cache: "no-store",
   });
@@ -29,6 +25,7 @@ async function fetchBookmarksFromHatena(
   if (res.status < 400) {
     return await res.json();
   }
+  return [];
 }
 
 /**
@@ -107,16 +104,15 @@ export default function Bookmarks({ username, totalBookmarks }: { username: stri
    * @param cache
    */
   async function reloadBookmarks(cached: boolean = false) {
-    // initState();
+    if (!cached) {
+      initState();
+    }
     let loopCount = 0;
 
     // キャッシュがあれば直近20ページの更新のみ行う
     if (cached) {
       // 数ページ分のブックマークデータを取得する
-      const data = await fetchBookmarksFromHatena(username, 1, pageChunk);
-      if (data == undefined) {
-        return;
-      }
+      const newBookmarks = await fetchBookmarksFromHatena(username, 1, pageChunk);
 
       setBookmarks(bookmarks => {
         const bookmarksMapByEid: BookmarksMap = bookmarks.reduce((acc, bookmark) => {
@@ -126,7 +122,7 @@ export default function Bookmarks({ username, totalBookmarks }: { username: stri
 
         const totalStarCountDiff = deepCopy(initalAllColorStarCount);
 
-        for (const newBookmark of data.bookmarks) {
+        for (const newBookmark of newBookmarks) {
           // キャッシュから取得した星の数と、直近更新した星の数の差を更新する
           const oldBookmark = bookmarksMapByEid[newBookmark.eid];
 
@@ -165,16 +161,13 @@ export default function Bookmarks({ username, totalBookmarks }: { username: stri
         const startPage = loopCount * pageChunk + 1;
 
         // 数ページ分のブックマークデータを取得する
-        const data = await fetchBookmarksFromHatena(username, startPage, pageChunk);
-        if (data == undefined) {
-          break;
-        }
+        const newBookmarks = await fetchBookmarksFromHatena(username, startPage, pageChunk);
 
-        setBookmarks(bookmarks => bookmarks.concat(data.bookmarks));
+        setBookmarks(bookmarks => bookmarks.concat(newBookmarks));
 
         setTotalStars(totalStars => {
           const _totalStars = deepCopy(totalStars);
-          for (const bookmark of data.bookmarks) {
+          for (const bookmark of newBookmarks) {
             STAR_COLOR_TYPES.forEach(starType => {
               _totalStars[starType] += bookmark.star[starType];
             });
@@ -186,7 +179,7 @@ export default function Bookmarks({ username, totalBookmarks }: { username: stri
         updateProgressByFetchBookmarkCount(loopCount);
 
         // ブックマークが取得上限に満たない場合は終了
-        if (data.bookmarks.length < 400) {
+        if (newBookmarks.length < 400) {
           setProgress(100);
           break;
         }
@@ -264,7 +257,7 @@ export default function Bookmarks({ username, totalBookmarks }: { username: stri
             className="btn btn-primary btn-sm shrink-0"
             onClick={() => {
               if (confirm("再取得には時間がかかる可能性があります。再取得しますか？")) {
-                reloadBookmarks();
+                reloadBookmarks(false);
               }
             }}
             disabled={progress < 100}
