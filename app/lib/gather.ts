@@ -5,11 +5,11 @@ import {
   initalAllColorStarCount,
   type AllColorStarCount,
   type StarPageResponse,
-  IBookmarker,
   StarPageEntry,
   BookmarksMap,
-  MonthlyData,
+  BookmarkData,
   StarCount,
+  MonthlyBookmarks,
 } from "@/app/lib/models";
 import {
   convertUTC2AsiaTokyo,
@@ -27,9 +27,7 @@ const starPageAPIEndpoint = `https://s.hatena.ne.jp/entry.json`;
 
 export class BookmarkStarGatherer {
   username: string;
-  result: IBookmarker = {
-    bookmarks: {},
-  };
+  monthlyBookmarks: MonthlyBookmarks = {};
 
   constructor(username: string) {
     this.username = username;
@@ -122,10 +120,10 @@ export class BookmarkStarGatherer {
         };
 
         const yyyymm = dateString.replace("-", "").slice(0, 6);
-        if (yyyymm in this.result.bookmarks) {
-          this.result.bookmarks[yyyymm].push(bookmarkResult);
+        if (yyyymm in this.monthlyBookmarks) {
+          this.monthlyBookmarks[yyyymm].push(bookmarkResult);
         } else {
-          this.result.bookmarks[yyyymm] = [bookmarkResult];
+          this.monthlyBookmarks[yyyymm] = [bookmarkResult];
         }
       }
 
@@ -140,7 +138,7 @@ export class BookmarkStarGatherer {
    * ブックマークのスター数を取得してブックマーク情報と紐づける
    */
   private async bulkGatherStarCount() {
-    const bookmarks = Object.values(this.result.bookmarks).flat();
+    const bookmarks = Object.values(this.monthlyBookmarks).flat();
     const commentURLList = bookmarks.map(bookmark => bookmark.commentURL);
     const promises: Promise<Response>[] = [];
 
@@ -214,15 +212,15 @@ export class BookmarkStarGatherer {
     // 各ブックマークのスターを取得
     await this.bulkGatherStarCount();
 
-    for (const yyyymm of Object.keys(this.result.bookmarks)) {
-      const bookmarks = this.result.bookmarks[yyyymm];
+    for (const yyyymm of Object.keys(this.monthlyBookmarks)) {
+      const bookmarks = this.monthlyBookmarks[yyyymm];
 
       const key = `${this.username}/${yyyymm}.json`;
 
       const filepath = `${CLOUDFRONT_DOMAIN}/${key}`;
       const response = await fetch(filepath);
 
-      let data: MonthlyData;
+      let data: BookmarkData;
       // すでに月ファイルがある場合
       // そのファイルのブックマークと重複する場合は今回ので上書き、ない場合は追加を行う
       // そのファイルのtotalStarに追加を行う
@@ -245,7 +243,7 @@ export class BookmarkStarGatherer {
       uploadS3(key, data);
     }
 
-    const bookmarks = Object.values(this.result.bookmarks).flat();
+    const bookmarks = Object.values(this.monthlyBookmarks).flat();
     return { bookmarks };
   }
 }

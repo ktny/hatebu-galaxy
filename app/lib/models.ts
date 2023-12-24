@@ -79,15 +79,11 @@ export interface IBookmark {
   star: AllColorStarCount;
 }
 
-export interface IBookmarker {
-  bookmarks: BookmarksMonthlyMap;
-}
-
-export interface MonthlyData {
+export interface BookmarkData {
   bookmarks: IBookmark[];
 }
 
-export interface BookmarksMonthlyMap {
+export interface MonthlyBookmarks {
   [yyyymm: string]: IBookmark[];
 }
 

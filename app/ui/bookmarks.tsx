@@ -1,6 +1,6 @@
 "use client";
 
-import { IBookmark, AllColorStarCount, initalAllColorStarCount, MonthlyData, BookmarksMap } from "@/app/lib/models";
+import { IBookmark, AllColorStarCount, initalAllColorStarCount, BookmarkData, BookmarksMap } from "@/app/lib/models";
 import Bookmark from "./bookmark";
 import StarList from "./starList";
 import { BOOKMARKS_PER_PAGE, STAR_COLOR_TYPES } from "@/app/constants";
@@ -21,7 +21,7 @@ async function fetchBookmarksFromHatena(
   username: string,
   startPage: number,
   pageChunk: number
-): Promise<MonthlyData | undefined> {
+): Promise<BookmarkData | undefined> {
   const res = await fetch(`/api/gather?username=${username}&startPage=${startPage}&pageChunk=${pageChunk}`, {
     cache: "no-store",
   });
