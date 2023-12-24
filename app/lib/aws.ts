@@ -20,7 +20,7 @@ const cloudfront = new CloudFront({
  * @param prefix バケット内のパス
  */
 export async function listS3Objects(prefix: string = "") {
-  const params: AWS.S3.ListObjectsV2Request = { Bucket: BUCKET, Prefix: prefix };
+  const params: S3.ListObjectsV2Request = { Bucket: BUCKET, Prefix: prefix };
   const response = await s3.listObjectsV2(params).promise();
   return response.Contents;
 }
@@ -30,12 +30,12 @@ export async function listS3Objects(prefix: string = "") {
  * @param key バケット内のオブジェクトのパス
  */
 export async function downloadFromS3(key: string): Promise<any> {
-  const params = { Bucket: BUCKET, Key: key };
+  const params: S3.GetObjectRequest = { Bucket: BUCKET, Key: key };
 
   return new Promise((resolve, reject) => {
     s3.getObject(params, (err, data) => {
       if (err) {
-        console.error(err, err.stack);
+        console.error(`File download error: ${key}`);
         reject(err);
       } else {
         console.log(`File download successfully: ${key}`);
@@ -56,7 +56,7 @@ export async function downloadFromS3(key: string): Promise<any> {
  */
 export async function uploadToS3(key: string, data: object | null = null) {
   const jsonString = data === null ? "" : JSON.stringify(data, null, 2);
-  const params = { Bucket: BUCKET, Key: key, Body: jsonString };
+  const params: S3.PutObjectRequest = { Bucket: BUCKET, Key: key, Body: jsonString, CacheControl: "max-age=86400" };
 
   return new Promise((resolve, reject) => {
     s3.putObject(params, err => {

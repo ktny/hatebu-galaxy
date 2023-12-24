@@ -66,7 +66,12 @@ export async function fetchBookmarksFromFile(fileNames: string[]): Promise<IBook
   // Promise.all用の配列にブックマーク取得用のリクエストを追加;
   for (const fileName of fileNames) {
     try {
-      promises.push(fetch(`/api/fetchFile?key=${fileName}`, { cache: "force-cache" }));
+      // promises.push(fetch(`/api/fetchFile?key=${fileName}`, { cache: "force-cache" }));
+      promises.push(
+        fetch(`/api/fetchFile?key=${fileName}`, {
+          headers: new Headers({ "Cache-Control": "max-age=86400" }),
+        })
+      );
     } catch (e) {
       console.error(`/api/fetchFile?key=${fileName}`);
       console.error(e);

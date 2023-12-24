@@ -230,7 +230,6 @@ export class BookmarkStarGatherer {
           }
         }
       } catch (err) {
-        console.error(`not found s3 file: ${key}`);
         cachedBookmarks = monthlyBookmarks;
       }
 
