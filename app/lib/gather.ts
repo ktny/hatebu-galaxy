@@ -19,7 +19,6 @@ import {
 } from "@/app/lib/util";
 import { BOOKMARKS_PER_PAGE } from "@/app/constants";
 import { setTimeout } from "timers/promises";
-import { CLOUDFRONT_DOMAIN } from "../config";
 import { downloadFromS3, uploadToS3 } from "./aws";
 
 const starPageAPIEndpoint = `https://s.hatena.ne.jp/entry.json`;
@@ -201,22 +200,14 @@ export class BookmarkStarGatherer {
     return starCount;
   }
 
-  async gather(startPage: number, pageChunk: number) {
-    // 1s sleep
-    await setTimeout(1000);
-
-    // 一度に最大で fetchPageChunk * BOOKMARKS_PER_PAGE のブックマークを取得する
-    await this.bulkGatherBookmarks(startPage, pageChunk);
-
-    // 各ブックマークのスターを取得
-    await this.bulkGatherStarCount();
-
+  private async uploadMonthlyBookmarksToS3() {
     for (const yyyymm of Object.keys(this.monthlyBookmarks)) {
       const monthlyBookmarks = this.monthlyBookmarks[yyyymm];
       const key = `${this.username}/${yyyymm}.json`;
       let cachedBookmarks: IBookmark[];
 
       try {
+        // CloudFrontから取得すると初回にその時点のS3ファイルでキャッシュしてしまい不整合が生まれるのでS3から取得する
         cachedBookmarks = await downloadFromS3(key);
 
         // すでに月ファイルがある場合
@@ -238,6 +229,20 @@ export class BookmarkStarGatherer {
       // 取得したデータはファイルに保存してキャッシュする
       uploadToS3(key, cachedBookmarks);
     }
+  }
+
+  async gather(startPage: number, pageChunk: number) {
+    // 1s sleep
+    await setTimeout(1000);
+
+    // 一度に最大で fetchPageChunk * BOOKMARKS_PER_PAGE のブックマークを取得する
+    await this.bulkGatherBookmarks(startPage, pageChunk);
+
+    // 各ブックマークのスターを取得
+    await this.bulkGatherStarCount();
+
+    // 月ごとのブックマークデータをS3にアップロードする
+    await this.uploadMonthlyBookmarksToS3();
 
     return Object.values(this.monthlyBookmarks).flat();
   }

@@ -2,7 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import Bookmarks from "@/app/ui/bookmarks";
 import ScrollTop from "@/app/ui/scrollTop";
-import fetchUserInfo from "@/app/lib/fetchUser";
+import { fetchUserInfo } from "@/app/api/api";
 
 export default async function Page({ params }: { params: { username: string } }) {
   const username = params.username;
