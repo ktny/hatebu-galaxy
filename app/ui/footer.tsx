@@ -20,12 +20,12 @@ export default function Footer() {
         </Link>
       </nav>
       <nav>
-        <div className="grid grid-flow-col gap-4">
+        <div className="grid grid-flow-col gap-6">
           <Link href="https://b.hatena.ne.jp/entry/s/hatebu-galaxy.vercel.app" target="_blank">
-            <Image src="/hatebu_icon.png" alt="はてなブックマーク" width="24" height="24" priority />
+            <Image src="/hatebu_icon.png" alt="はてなブックマーク" width="32" height="32" priority />
           </Link>
           <Link href="https://github.com/ktny/hatebu-galaxy" target="_blank">
-            <Image src="/github_icon.svg" alt="GitHub" width="24" height="24" priority />
+            <Image src="/github_icon.svg" alt="GitHub" width="32" height="32" priority />
           </Link>
         </div>
       </nav>
