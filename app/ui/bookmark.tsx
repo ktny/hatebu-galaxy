@@ -1,5 +1,4 @@
 import Link from "next/link";
-import Image from "next/image";
 import StarList from "@/app/ui/starList";
 import { IBookmark } from "@/app/lib/models";
 import { formatDateString } from "@/app/lib/util";
