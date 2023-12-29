@@ -2,7 +2,7 @@ import type { NextApiRequest, NextApiResponse } from "next";
 import { BookmarkStarGatherer } from "@/app/lib/gather";
 
 /**
- * はてなからユーザーの月ごとのブックマークを取得する
+ * はてなからユーザーのブックマークを取得する
  * @param req
  * @param res
  * @returns

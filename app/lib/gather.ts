@@ -8,7 +8,7 @@ import {
   StarPageEntry,
   BookmarksMap,
   StarCount,
-  MonthlyBookmarks,
+  YearlyBookmarks,
 } from "@/app/lib/models";
 import {
   convertUTC2AsiaTokyo,
@@ -25,7 +25,7 @@ const starPageAPIEndpoint = `https://s.hatena.ne.jp/entry.json`;
 
 export class BookmarkStarGatherer {
   username: string;
-  monthlyBookmarks: MonthlyBookmarks = {};
+  yearlyBookmarks: YearlyBookmarks = {};
   hasNextPage = false;
 
   constructor(username: string) {
@@ -121,11 +121,11 @@ export class BookmarkStarGatherer {
           commentURL: buildCommentURL(bookmark.location_id, dateString.replaceAll("-", "")),
         };
 
-        const yyyymm = dateString.replace("-", "").slice(0, 6);
-        if (yyyymm in this.monthlyBookmarks) {
-          this.monthlyBookmarks[yyyymm].push(bookmarkResult);
+        const yyyy = dateString.replace("-", "").slice(0, 4);
+        if (yyyy in this.yearlyBookmarks) {
+          this.yearlyBookmarks[yyyy].push(bookmarkResult);
         } else {
-          this.monthlyBookmarks[yyyymm] = [bookmarkResult];
+          this.yearlyBookmarks[yyyy] = [bookmarkResult];
         }
       }
 
@@ -141,7 +141,7 @@ export class BookmarkStarGatherer {
    * ブックマークのスター数を取得してブックマーク情報と紐づける
    */
   private async bulkGatherStarCount() {
-    const bookmarks = Object.values(this.monthlyBookmarks).flat();
+    const bookmarks = Object.values(this.yearlyBookmarks).flat();
     const commentURLList = bookmarks.map(bookmark => bookmark.commentURL);
     const promises: Promise<Response>[] = [];
 
@@ -208,20 +208,20 @@ export class BookmarkStarGatherer {
     return starCount;
   }
 
-  private async uploadMonthlyBookmarksToS3() {
-    for (const yyyymm of Object.keys(this.monthlyBookmarks)) {
-      const monthlyBookmarks = this.monthlyBookmarks[yyyymm];
-      const key = `${this.username}/${yyyymm}.json`;
+  private async uploadBookmarksToS3() {
+    for (const yyyy of Object.keys(this.yearlyBookmarks)) {
+      const yearlyBookmarks = this.yearlyBookmarks[yyyy];
+      const key = `${this.username}/${yyyy}.json`;
       let cachedBookmarks: IBookmark[];
 
       try {
         // CloudFrontから取得すると初回にその時点のS3ファイルでキャッシュしてしまい不整合が生まれるのでS3から取得する
         cachedBookmarks = await downloadFromS3(key);
 
-        // すでに月ファイルがある場合
+        // すでに年ファイルがある場合
         // そのファイルのブックマークと重複する場合は今回ので上書き、ない場合は追加を行う
         // そのファイルのtotalStarに追加を行う
-        for (const newBookmark of monthlyBookmarks) {
+        for (const newBookmark of yearlyBookmarks) {
           const foundIndex = cachedBookmarks.findIndex(bookmark => bookmark.eid === newBookmark.eid);
           if (foundIndex === -1) {
             cachedBookmarks.push(newBookmark);
@@ -230,7 +230,7 @@ export class BookmarkStarGatherer {
           }
         }
       } catch (err) {
-        cachedBookmarks = monthlyBookmarks;
+        cachedBookmarks = yearlyBookmarks;
       }
 
       // 取得したデータはファイルに保存してキャッシュする
@@ -248,8 +248,8 @@ export class BookmarkStarGatherer {
     // 各ブックマークのスターを取得
     await this.bulkGatherStarCount();
 
-    // 月ごとのブックマークデータをS3にアップロードする
-    await this.uploadMonthlyBookmarksToS3();
+    // 年ごとのブックマークデータをS3にアップロードする
+    await this.uploadBookmarksToS3();
 
     // 次ページがなければ全取得完了のファイルをS3にアップロードする
     if (!this.hasNextPage) {
@@ -257,7 +257,7 @@ export class BookmarkStarGatherer {
     }
 
     return {
-      bookmarks: Object.values(this.monthlyBookmarks).flat(),
+      bookmarks: Object.values(this.yearlyBookmarks).flat(),
       hasNextPage: this.hasNextPage,
     };
   }

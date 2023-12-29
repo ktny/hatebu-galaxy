@@ -32,7 +32,7 @@ export async function listBookmarkFileName(username: string): Promise<string[]> 
 }
 
 /**
- * はてなからユーザーの月ごとのブックマークを取得する
+ * はてなからユーザーのブックマークを取得する
  * @param username
  * @param startPage
  * @param pageChunk
@@ -56,7 +56,7 @@ export async function fetchBookmarksFromHatena(
 }
 
 /**
- * ファイルからユーザーの月ごとのブックマークを取得する
+ * ファイルからユーザーのブックマークを取得する
  * @param fileName
  * @returns
  */

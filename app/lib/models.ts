@@ -90,12 +90,12 @@ export interface fetchBookmarksFromHatenaResponse {
   hasNextPage: boolean;
 }
 
-export interface MonthlyBookmarks {
-  [yyyymm: string]: IBookmark[];
+export interface YearlyBookmarks {
+  [yyyy: string]: IBookmark[];
 }
 
-export interface MonthlyAllColorStarCount {
-  [yyyymm: string]: AllColorStarCount;
+export interface YearlyAllColorStarCount {
+  [yyyy: string]: AllColorStarCount;
 }
 
 export interface BookmarksMap {
