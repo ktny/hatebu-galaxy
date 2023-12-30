@@ -12,6 +12,7 @@ export async function fetchUserInfo(username: string): Promise<UserInfoResponse 
   const response = await fetch(url, { next: { revalidate: 86400 } });
   if (response.status === 200) {
     const data = await response.json();
+    console.log(data);
     return data.user;
   } else if (response.status === 404) {
     return notFound();
@@ -53,7 +54,7 @@ export async function fetchBookmarksFromFile(fileNames: string[]): Promise<IBook
   // Promise.all用の配列にブックマーク取得用のリクエストを追加;
   for (const fileName of fileNames) {
     try {
-      promises.push(fetch(`${CLOUDFRONT_DOMAIN}/${fileName}`, { cache: "no-store" }));
+      promises.push(fetch(`${CLOUDFRONT_DOMAIN}/${fileName}`));
     } catch (e) {
       console.error(`/api/fetchFile?key=${fileName}`);
       console.error(e);
