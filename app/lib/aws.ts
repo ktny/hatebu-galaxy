@@ -56,7 +56,13 @@ export async function downloadFromS3(key: string): Promise<any> {
  */
 export async function uploadToS3(key: string, data: object | null = null) {
   const jsonString = data === null ? "" : JSON.stringify(data, null, 2);
-  const params: S3.PutObjectRequest = { Bucket: BUCKET, Key: key, Body: jsonString, CacheControl: "max-age=86400" };
+  const params: S3.PutObjectRequest = {
+    Bucket: BUCKET,
+    Key: key,
+    Body: jsonString,
+    CacheControl: "max-age=86400",
+    ContentType: "application/json",
+  };
 
   return new Promise((resolve, reject) => {
     s3.putObject(params, err => {

@@ -11,7 +11,7 @@ import {
   YearlyBookmarks,
 } from "@/app/lib/models";
 import {
-  convertUTC2AsiaTokyo,
+  getAsiaTokyoDate,
   deepCopy,
   excludeProtocolFromURL,
   extractEIDFromURL,
@@ -104,7 +104,7 @@ export class BookmarkStarGatherer {
         continue;
       }
       for (const bookmark of bookmarksPageResponse.value.item.bookmarks) {
-        const createdDate = convertUTC2AsiaTokyo(bookmark.created);
+        const createdDate = getAsiaTokyoDate(bookmark.created);
         const dateString = formatDateString(createdDate);
 
         const bookmarkResult: IBookmark = {

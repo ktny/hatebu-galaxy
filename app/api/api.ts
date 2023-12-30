@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { IBookmark, UserInfoResponse, fetchBookmarksFromHatenaResponse } from "@/app/lib/models";
+import { CLOUDFRONT_DOMAIN } from "../config";
 
 /**
  * はてなからユーザー情報を取得する
@@ -15,20 +16,6 @@ export async function fetchUserInfo(username: string): Promise<UserInfoResponse 
   } else if (response.status === 404) {
     return notFound();
   }
-}
-
-/**
- * ブックマーク結果ファイル一覧を取得する
- * @param username
- * @returns
- */
-export async function listBookmarkFileName(username: string): Promise<string[]> {
-  const res = await fetch(`/api/listFile?username=${username}`);
-
-  if (res.status < 400) {
-    return await res.json();
-  }
-  return [];
 }
 
 /**
@@ -66,12 +53,7 @@ export async function fetchBookmarksFromFile(fileNames: string[]): Promise<IBook
   // Promise.all用の配列にブックマーク取得用のリクエストを追加;
   for (const fileName of fileNames) {
     try {
-      promises.push(
-        fetch(`/api/fetchFile?key=${fileName}`, {
-          cache: "force-cache",
-          headers: new Headers({ "Cache-Control": "max-age=86400" }),
-        })
-      );
+      promises.push(fetch(`${CLOUDFRONT_DOMAIN}/${fileName}`, { cache: "no-store" }));
     } catch (e) {
       console.error(`/api/fetchFile?key=${fileName}`);
       console.error(e);
@@ -79,14 +61,11 @@ export async function fetchBookmarksFromFile(fileNames: string[]): Promise<IBook
   }
 
   // ブックマークページAPIのレスポンスを取得する
-  const responses = await Promise.allSettled(promises);
+  const responses = await Promise.all(promises);
 
   let result: IBookmark[] = [];
   for (const response of responses) {
-    if (response.status === "rejected") {
-      continue;
-    }
-    const bookmarks: IBookmark[] = await response.value.json();
+    const bookmarks: IBookmark[] = await response.json();
     result = result.concat(bookmarks);
   }
 
