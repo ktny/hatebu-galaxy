@@ -20,7 +20,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const response = await fetch(filepath);
   if (response.status === 200) {
     const data = await response.json();
-    console.log("use cloudfront cache");
     res.status(200).json(data);
     return;
   }

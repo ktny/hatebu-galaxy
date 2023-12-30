@@ -11,18 +11,18 @@ export default async function Page({ params }: { params: { username: string } })
   return (
     <>
       <article className="w-full md:max-w-screen-md">
-        <Link href={userPage} target="_blank" className="hover:opacity-50">
-          <div className="flex items-center gap-4">
-            <div className="avatar w-16 h-16 shrink-0">
-              <div className="rounded-xl">
-                <Image src={profileIcon} width={64} height={64} alt={username} priority />
-              </div>
+        <div className="flex items-center gap-4">
+          <Link href={userPage} target="_blank" className="avatar w-16 h-16 shrink-0 hover:opacity-50">
+            <div className="rounded-xl">
+              <Image src={profileIcon} width={64} height={64} alt={username} priority />
             </div>
+          </Link>
+          <Link href={userPage} target="_blank" className="hover:opacity-50">
             <h1 className="font-mono text-2xl" style={{ overflowWrap: "anywhere" }}>
               {username}
             </h1>
-          </div>
-        </Link>
+          </Link>
+        </div>
 
         <Bookmarks username={username}></Bookmarks>
       </article>

@@ -16,8 +16,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const url = `https://b.hatena.ne.jp/api/internal/cambridge/user/${username}`;
   const response = await fetch(url, { next: { revalidate: 86400 } });
 
-  console.log(response.status);
-
   if (response.status < 400) {
     const data = await response.json();
     res.status(200).json(data);
