@@ -16,7 +16,7 @@ export default function Search() {
         value={username}
         onChange={e => setUsername(e.target.value)}
         onKeyDown={e => {
-          if (e.key === "Enter") {
+          if (e.key === "Enter" && !disabled) {
             window.location.href = `/user/${username}`;
           }
         }}

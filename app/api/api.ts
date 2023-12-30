@@ -47,25 +47,16 @@ export async function fetchBookmarksFromHatena(
  * @returns
  */
 export async function fetchBookmarksFromFile(fileNames: string[]): Promise<IBookmark[]> {
-  const promises: Promise<Response>[] = [];
-
-  // Promise.all用の配列にブックマーク取得用のリクエストを追加;
-  for (const fileName of fileNames) {
-    try {
-      promises.push(fetch(`${CLOUDFRONT_DOMAIN}/${fileName}`));
-    } catch (e) {
-      console.error(`/api/fetchFile?key=${fileName}`);
-      console.error(e);
-    }
-  }
-
-  // ブックマークページAPIのレスポンスを取得する
-  const responses = await Promise.all(promises);
-
   let result: IBookmark[] = [];
-  for (const response of responses) {
-    const bookmarks: IBookmark[] = await response.json();
-    result = result.concat(bookmarks);
+
+  // 最初のブックマークの日付を元に推測したキャッシュファイル名でしかないのでallでなく1ファイルずつ取得する
+  // 取得できなかったファイルはない可能性もあるのでそのまま取得しない
+  for (const fileName of fileNames) {
+    const response = await fetch(`${CLOUDFRONT_DOMAIN}/${fileName}`);
+    if (response.ok) {
+      const bookmarks: IBookmark[] = await response.json();
+      result = result.concat(bookmarks);
+    }
   }
 
   return result;
