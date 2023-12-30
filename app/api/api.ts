@@ -7,13 +7,12 @@ import { CLOUDFRONT_DOMAIN } from "../config";
  * @returns
  */
 export async function fetchUserInfo(username: string): Promise<UserInfoResponse | null> {
-  const response = await fetch(`/api/fetchUserInfo?username=${username}`);
+  const response = await fetch(`/api/fetchUserInfo?username=${username}`, { cache: "force-cache" });
 
   if (response.status === 200) {
     const data = await response.json();
     return data.user;
   } else {
-    console.log("aaaaaaaa");
     return null;
   }
 }

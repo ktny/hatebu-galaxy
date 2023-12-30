@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  IBookmark,
-  AllColorStarCount,
-  initalAllColorStarCount,
-  BookmarksMap,
-  UserInfoResponse,
-} from "@/app/lib/models";
+import { IBookmark, AllColorStarCount, initalAllColorStarCount, BookmarksMap } from "@/app/lib/models";
 import Bookmark from "./bookmark";
 import StarList from "./starList";
 import { BOOKMARKS_PER_PAGE, STAR_COLOR_TYPES } from "@/app/constants";
@@ -20,7 +14,6 @@ export default function Bookmarks({ username }: { username: string }) {
   const completedFileName = `${username}/completed`;
 
   const [bookmarks, setBookmarks] = useState<IBookmark[]>([]);
-  const [user, setUser] = useState<UserInfoResponse | undefined | null>(undefined);
   const [progress, setProgress] = useState(0);
   const [totalStars, setTotalStars] = useState<AllColorStarCount>(deepCopy(initalAllColorStarCount));
   const [bookmarkCountForDisplay, setBookmarkCountForDisplay] = useState(20);
@@ -33,23 +26,17 @@ export default function Bookmarks({ username }: { username: string }) {
     setProgress(0);
     setTotalStars(deepCopy(initalAllColorStarCount));
     setBookmarkCountForDisplay(20);
-    setUser(undefined);
   }
 
   /**
    * 現在のブックマーク取得回数から進捗バーを更新する
    * @param loopCount
    */
-  function updateProgressByFetchBookmarkCount(loopCount: number) {
-    if (!user) {
-      return;
-    }
-
+  function updateProgressByFetchBookmarkCount(loopCount: number, totalBookmarks: number) {
     const bookmarkCountFetched = loopCount * BOOKMARKS_PER_PAGE * pageChunk;
     const progress =
-      bookmarkCountFetched > user.total_bookmarks
-        ? 100
-        : Math.floor((bookmarkCountFetched / user.total_bookmarks) * 100);
+      bookmarkCountFetched > totalBookmarks ? 100 : Math.floor((bookmarkCountFetched / totalBookmarks) * 100);
+
     setProgress(progress);
   }
 
@@ -109,10 +96,6 @@ export default function Bookmarks({ username }: { username: string }) {
    * @param cache
    */
   async function reloadBookmarks(cached: boolean = false) {
-    if (!cached) {
-      initState();
-    }
-
     // キャッシュがあれば直近20ページの更新のみ行う
     if (cached) {
       // 数ページ分のブックマークデータを取得する
@@ -123,18 +106,25 @@ export default function Bookmarks({ username }: { username: string }) {
 
       // キャッシュがなければ全ブックマークの取得を行う（通常は初回）
     } else {
+      initState();
+
+      const user = await fetchUserInfo(username);
+      if (user === null) {
+        window.location.href = "/not-found";
+      }
+
       let loopCount = 0;
 
-      while (true) {
+      while (user?.total_bookmarks) {
         const startPage = loopCount * pageChunk + 1;
 
         // 数ページ分のブックマークデータを取得する
-        const newBookmarks = await fetchBookmarksFromHatena(username, startPage, pageChunk, "no-store");
+        const newBookmarks = await fetchBookmarksFromHatena(username, startPage, pageChunk, "force-cache");
         setBookmarks(bookmarks => bookmarks.concat(newBookmarks.bookmarks));
         calcTotalStarCount(newBookmarks.bookmarks.map(b => b.star));
 
         loopCount += 1;
-        updateProgressByFetchBookmarkCount(loopCount);
+        updateProgressByFetchBookmarkCount(loopCount, user.total_bookmarks);
 
         // 次のページがない場合は終了
         if (!newBookmarks.hasNextPage) {
@@ -189,7 +179,6 @@ export default function Bookmarks({ username }: { username: string }) {
 
       return true;
     } catch (e) {
-      console.error(e);
       return false;
     }
   }
@@ -211,18 +200,8 @@ export default function Bookmarks({ username }: { username: string }) {
 
     // 過去のキャッシュ済ブックマークがあれば取得する
     fetchCachedBookmarks().then(cached => {
-      if (!cached) {
-        fetchUserInfo(username).then(user => {
-          if (user === null) {
-            window.location.href = "/not-found";
-          }
-          setUser(user);
-          reloadBookmarks(cached);
-        });
-      } else {
-        // 直近のブックマークを更新する
-        reloadBookmarks(cached);
-      }
+      // 直近のブックマークを更新する
+      reloadBookmarks(cached);
     });
 
     document.addEventListener("scroll", handleScroll, { passive: true });
