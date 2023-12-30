@@ -1,28 +1,18 @@
 import { S3, CloudFront, DynamoDB, config } from "aws-sdk";
 import { CLOUDFRONT_ID } from "@/app/config";
-import { resolve } from "path";
 
-const REGION = "ap-northeast-1";
-const BUCKET = "hatebu-galaxy";
-const tableName = "hatebu-galaxy";
+const region = "ap-northeast-1";
+const s3BucketName = "hatebu-galaxy";
+const dynamoTableName = "hatebu-galaxy";
 
 config.update({
   accessKeyId: process.env.AWS_ACCESS_KEY_ID,
   secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-  region: REGION,
+  region: region,
 });
 
-const s3 = new S3({
-  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-  region: REGION,
-});
-
-const cloudfront = new CloudFront({
-  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-});
-
+const s3 = new S3();
+const cloudfront = new CloudFront();
 const docClient = new DynamoDB.DocumentClient({});
 
 /**
@@ -30,7 +20,7 @@ const docClient = new DynamoDB.DocumentClient({});
  * @param prefix バケット内のパス
  */
 export async function listS3Objects(prefix: string = "") {
-  const params: S3.ListObjectsV2Request = { Bucket: BUCKET, Prefix: prefix };
+  const params: S3.ListObjectsV2Request = { Bucket: s3BucketName, Prefix: prefix };
   const response = await s3.listObjectsV2(params).promise();
   return response.Contents;
 }
@@ -40,15 +30,15 @@ export async function listS3Objects(prefix: string = "") {
  * @param key バケット内のオブジェクトのパス
  */
 export async function downloadFromS3(key: string): Promise<any> {
-  const params: S3.GetObjectRequest = { Bucket: BUCKET, Key: key };
+  const params: S3.GetObjectRequest = { Bucket: s3BucketName, Key: key };
 
   return new Promise((resolve, reject) => {
     s3.getObject(params, (err, data) => {
       if (err) {
-        console.error(`File download error: ${key}`);
+        console.error("File download error:", key);
         reject(err);
       } else {
-        console.log(`File download successfully: ${key}`);
+        console.log("File download successfully:", key);
         const json = data.Body?.toString();
         if (json) {
           resolve(JSON.parse(json));
@@ -67,7 +57,7 @@ export async function downloadFromS3(key: string): Promise<any> {
 export async function uploadToS3(key: string, data: object | null = null) {
   const jsonString = data === null ? "" : JSON.stringify(data, null, 2);
   const params: S3.PutObjectRequest = {
-    Bucket: BUCKET,
+    Bucket: s3BucketName,
     Key: key,
     Body: jsonString,
     CacheControl: "max-age=86400",
@@ -80,7 +70,7 @@ export async function uploadToS3(key: string, data: object | null = null) {
         console.error(err, err.stack);
         reject(err);
       } else {
-        console.log(`File upload successfully: ${key}`);
+        console.log("File upload successfully:", key);
         resolve(true);
       }
     });
@@ -114,7 +104,7 @@ export function invalidation(pathList: string[]) {
 
 export function putItemToDynamo(key: string, value: any) {
   const params = {
-    TableName: tableName,
+    TableName: dynamoTableName,
     Item: {
       username: key,
       firstBookmarkCreated: value,
@@ -132,7 +122,7 @@ export function putItemToDynamo(key: string, value: any) {
 
 export async function getItemFromDynamo(key: string): Promise<any> {
   const params = {
-    TableName: tableName,
+    TableName: dynamoTableName,
     Key: { username: key },
   };
 
@@ -146,18 +136,5 @@ export async function getItemFromDynamo(key: string): Promise<any> {
         resolve(data);
       }
     });
-    // s3.getObject(params, (err, data) => {
-    //   if (err) {
-    //     console.error(`File download error: ${key}`);
-    //     reject(err);
-    //   } else {
-    //     console.log(`File download successfully: ${key}`);
-    //     const json = data.Body?.toString();
-    //     if (json) {
-    //       resolve(JSON.parse(json));
-    //     }
-    //     reject(`File body undefined: ${key}`);
-    //   }
-    // });
   });
 }
