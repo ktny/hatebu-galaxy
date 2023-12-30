@@ -4,15 +4,18 @@ import { IBookmark, AllColorStarCount, initalAllColorStarCount, BookmarksMap } f
 import Bookmark from "./bookmark";
 import StarList from "./starList";
 import { BOOKMARKS_PER_PAGE, STAR_COLOR_TYPES } from "@/app/constants";
-import { useState, useEffect, useCallback, cache } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { deepCopy, getAsiaTokyoDate } from "@/app/lib/util";
-import { fetchBookmarksFromFile, fetchBookmarksFromHatena, fetchUserInfo } from "@/app/api/api";
+import {
+  fetchBookmarksFromFile,
+  fetchBookmarksFromHatena,
+  fetchFirstBookmarkCreated,
+  fetchUserInfo,
+} from "@/app/api/api";
 
 const pageChunk = 20;
 
 export default function Bookmarks({ username }: { username: string }) {
-  const completedFileName = `${username}/completed`;
-
   const [bookmarks, setBookmarks] = useState<IBookmark[]>([]);
   const [progress, setProgress] = useState(0);
   const [totalStars, setTotalStars] = useState<AllColorStarCount>(deepCopy(initalAllColorStarCount));
@@ -137,15 +140,19 @@ export default function Bookmarks({ username }: { username: string }) {
 
   /**
    * ブックマークファイル名リストを取得する
-   * （ブックマークファイルは年ごとに記録しているため、2006年から現在までの年を示したファイル名になる）
    * @returns
    */
-  function listBookmarkFileNames() {
-    const startYear = 2023;
-    // const startYear = 2006;
-    const endYear = getAsiaTokyoDate().getFullYear();
+  async function listBookmarkFileNames(): Promise<string[]> {
+    // 最初にブックマークした日付を元に最初の開始年を求める
+    const firstBookmarkCreated = await fetchFirstBookmarkCreated(username);
+    if (firstBookmarkCreated <= 0) {
+      return [];
+    }
 
+    const startYear = getAsiaTokyoDate(firstBookmarkCreated).getFullYear();
+    const endYear = getAsiaTokyoDate().getFullYear();
     const fileNames = [];
+
     for (let year = startYear; year <= endYear; year++) {
       fileNames.push(`${username}/${year}.json`);
     }
@@ -155,20 +162,18 @@ export default function Bookmarks({ username }: { username: string }) {
 
   /**
    * キャッシュ済のブックマークを取得する
+   * @returns キャッシュ済のブックマークがあるか
    */
   async function fetchCachedBookmarks(): Promise<boolean> {
     try {
-      // S3バケットからファイル名を取得し、completedファイルがなければ全キャッシュ済でないとして返す
-      const fileNames = listBookmarkFileNames();
-      // if (!fileNames.includes(completedFileName)) {
-      //   return false;
-      // }
+      // キャッシュ用ファイル名の取得を試みる
+      const fileNames = await listBookmarkFileNames();
+      if (fileNames.length === 0) {
+        return false;
+      }
 
       // ブックマークが0件であれば全キャッシュ済でないとして返す
-      const allFetchedBookmarks = await fetchBookmarksFromFile(
-        fileNames.filter(fileName => fileName !== completedFileName)
-      );
-
+      const allFetchedBookmarks = await fetchBookmarksFromFile(fileNames);
       if (allFetchedBookmarks.length === 0) {
         return false;
       }

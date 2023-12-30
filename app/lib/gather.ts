@@ -19,7 +19,7 @@ import {
 } from "@/app/lib/util";
 import { BOOKMARKS_PER_PAGE } from "@/app/constants";
 import { setTimeout } from "timers/promises";
-import { downloadFromS3, uploadToS3 } from "./aws";
+import { downloadFromS3, putItemToDynamo, uploadToS3 } from "./aws";
 
 const starPageAPIEndpoint = `https://s.hatena.ne.jp/entry.json`;
 
@@ -27,6 +27,7 @@ export class BookmarkStarGatherer {
   username: string;
   yearlyBookmarks: YearlyBookmarks = {};
   hasNextPage = false;
+  firstBookmarkCreated = 0;
 
   constructor(username: string) {
     this.username = username;
@@ -103,9 +104,12 @@ export class BookmarkStarGatherer {
       if (bookmarksPageResponse.status === "rejected") {
         continue;
       }
-      for (const bookmark of bookmarksPageResponse.value.item.bookmarks) {
+      const bookmarks = bookmarksPageResponse.value.item.bookmarks;
+
+      for (const bookmark of bookmarks) {
         const createdDate = getAsiaTokyoDate(bookmark.created);
         const dateString = formatDateString(createdDate);
+        const createdUnixTime = createdDate.getTime();
 
         const bookmarkResult: IBookmark = {
           eid: bookmark.location_id,
@@ -113,7 +117,7 @@ export class BookmarkStarGatherer {
           bookmarkCount: bookmark.entry.total_bookmarks,
           category: bookmark.entry.category.path,
           entryURL: bookmark.url,
-          created: createdDate.getTime(),
+          created: createdUnixTime,
           comment: bookmark.comment,
           image: bookmark.entry.image,
           star: deepCopy(initalAllColorStarCount),
@@ -127,6 +131,8 @@ export class BookmarkStarGatherer {
         } else {
           this.yearlyBookmarks[yyyy] = [bookmarkResult];
         }
+
+        this.firstBookmarkCreated = createdUnixTime;
       }
 
       // 次ページがなければブックマーク情報の整理を終了する
@@ -253,7 +259,7 @@ export class BookmarkStarGatherer {
 
     // 次ページがなければ全取得完了のファイルをS3にアップロードする
     if (!this.hasNextPage) {
-      await uploadToS3(`${this.username}/completed`);
+      putItemToDynamo(this.username, this.firstBookmarkCreated);
     }
 
     return {

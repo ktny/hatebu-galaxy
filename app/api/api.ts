@@ -9,7 +9,7 @@ import { CLOUDFRONT_DOMAIN } from "../config";
 export async function fetchUserInfo(username: string): Promise<UserInfoResponse | null> {
   const response = await fetch(`/api/fetchUserInfo?username=${username}`, { cache: "force-cache" });
 
-  if (response.status === 200) {
+  if (response.ok) {
     const data = await response.json();
     return data.user;
   } else {
@@ -31,12 +31,12 @@ export async function fetchBookmarksFromHatena(
   pageChunk: number,
   cache: RequestCache
 ): Promise<fetchBookmarksFromHatenaResponse> {
-  const res = await fetch(`/api/gather?username=${username}&startPage=${startPage}&pageChunk=${pageChunk}`, {
+  const response = await fetch(`/api/gather?username=${username}&startPage=${startPage}&pageChunk=${pageChunk}`, {
     cache,
   });
 
-  if (res.status < 400) {
-    return await res.json();
+  if (response.ok) {
+    return await response.json();
   }
   return { bookmarks: [], hasNextPage: false };
 }
@@ -69,4 +69,20 @@ export async function fetchBookmarksFromFile(fileNames: string[]): Promise<IBook
   }
 
   return result;
+}
+
+/**
+ * ユーザーの最初のブックマークのUnixTimeを取得する
+ * @param username
+ * @returns
+ */
+export async function fetchFirstBookmarkCreated(username: string): Promise<number> {
+  const response = await fetch(`/api/firstBookmarkCreated?username=${username}`, { cache: "no-store" });
+
+  if (response.ok) {
+    const data = await response.json();
+    return data.firstBookmarkCreated;
+  }
+
+  return 0;
 }

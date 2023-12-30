@@ -1,8 +1,16 @@
-import { S3, CloudFront } from "aws-sdk";
+import { S3, CloudFront, DynamoDB, config } from "aws-sdk";
 import { CLOUDFRONT_ID } from "@/app/config";
+import { resolve } from "path";
 
 const REGION = "ap-northeast-1";
 const BUCKET = "hatebu-galaxy";
+const tableName = "hatebu-galaxy";
+
+config.update({
+  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+  region: REGION,
+});
 
 const s3 = new S3({
   accessKeyId: process.env.AWS_ACCESS_KEY_ID,
@@ -14,6 +22,8 @@ const cloudfront = new CloudFront({
   accessKeyId: process.env.AWS_ACCESS_KEY_ID,
   secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
 });
+
+const docClient = new DynamoDB.DocumentClient({});
 
 /**
  * S3バケット内のオブジェクトリストを取得する
@@ -99,5 +109,55 @@ export function invalidation(pathList: string[]) {
     } else {
       console.log(`Create invaldation successfully`);
     }
+  });
+}
+
+export function putItemToDynamo(key: string, value: any) {
+  const params = {
+    TableName: tableName,
+    Item: {
+      username: key,
+      firstBookmarkCreated: value,
+    },
+  };
+
+  docClient.put(params, (err, data) => {
+    if (err) {
+      console.error("Error putting item:", err);
+    } else {
+      console.log("Item put successful:", data);
+    }
+  });
+}
+
+export async function getItemFromDynamo(key: string): Promise<any> {
+  const params = {
+    TableName: tableName,
+    Key: { username: key },
+  };
+
+  return new Promise((resolve, reject) => {
+    docClient.get(params, (err, data) => {
+      if (err) {
+        console.error("Error getting item:", err);
+        reject(err);
+      } else {
+        console.log("Item get successful:", data);
+        resolve(data);
+      }
+    });
+    // s3.getObject(params, (err, data) => {
+    //   if (err) {
+    //     console.error(`File download error: ${key}`);
+    //     reject(err);
+    //   } else {
+    //     console.log(`File download successfully: ${key}`);
+    //     const json = data.Body?.toString();
+    //     if (json) {
+    //       resolve(JSON.parse(json));
+    //     }
+    //     reject(`File body undefined: ${key}`);
+    //   }
+    // });
   });
 }

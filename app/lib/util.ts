@@ -2,12 +2,12 @@ import { utcToZonedTime } from "date-fns-tz";
 
 /**
  * UTC時間の日付文字列をYYYY-MM-DD形式のAsia/TokyoのDate型に変換する
- * @param dateString UTCの日付文字列（ex. 2023-12-13T13:00:27Z）
+ * @param origin UTCの日付文字列（ex. 2023-12-13T13:00:27Z）、UnixTimeの数値
  * @returns YYYY-MM-DD形式のAsia/Tokyoの日付文字列
  */
-export function getAsiaTokyoDate(dateString: string | null = null): Date {
+export function getAsiaTokyoDate(origin: string | number | null = null): Date {
   // 引数指定がなければ現在の日時をAsia/Tokyoで返す、あれば日付文字列をAsia/TokyoのDateオブジェクトに変換
-  const date = dateString !== null ? new Date(dateString) : new Date();
+  const date = origin !== null ? new Date(origin) : new Date();
   return utcToZonedTime(date, "Asia/Tokyo");
 }
 

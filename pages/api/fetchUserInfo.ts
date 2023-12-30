@@ -24,7 +24,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return;
   }
 
-  console.log("aeerere");
   res.status(404).json({});
   return;
 }

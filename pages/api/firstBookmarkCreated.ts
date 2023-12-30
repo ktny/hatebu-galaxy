@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from "next";
-import { listS3Objects } from "@/app/lib/aws";
+import { getItemFromDynamo } from "@/app/lib/aws";
 
 /**
  *
@@ -14,14 +14,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   const username = req.query["username"] as string;
-
-  const files = await listS3Objects(username);
-  if (files !== undefined) {
-    const data = files.map(file => file.Key);
-    res.status(200).json(data);
-    return;
-  } else {
-    res.status(404);
-    return;
-  }
+  const data = await getItemFromDynamo(username);
+  res.status(200).json(data.Item);
+  return;
 }
