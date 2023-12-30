@@ -1,4 +1,3 @@
-import { notFound } from "next/navigation";
 import { IBookmark, UserInfoResponse, fetchBookmarksFromHatenaResponse } from "@/app/lib/models";
 import { CLOUDFRONT_DOMAIN } from "../config";
 
@@ -7,15 +6,15 @@ import { CLOUDFRONT_DOMAIN } from "../config";
  * @param username
  * @returns
  */
-export async function fetchUserInfo(username: string): Promise<UserInfoResponse | undefined> {
-  const url = `https://b.hatena.ne.jp/api/internal/cambridge/user/${username}`;
-  const response = await fetch(url, { next: { revalidate: 86400 } });
+export async function fetchUserInfo(username: string): Promise<UserInfoResponse | null> {
+  const response = await fetch(`/api/fetchUserInfo?username=${username}`);
+
   if (response.status === 200) {
     const data = await response.json();
-    console.log(data);
     return data.user;
-  } else if (response.status === 404) {
-    return notFound();
+  } else {
+    console.log("aaaaaaaa");
+    return null;
   }
 }
 
