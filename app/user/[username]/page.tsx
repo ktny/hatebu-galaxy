@@ -9,7 +9,7 @@ type Props = {
 
 export async function generateMetadata({ params }: Props) {
   return {
-    title: `${params.username} - はてなギャラクシー`,
+    title: `${params.username} - はてな★ギャラクシー`,
   };
 }
 

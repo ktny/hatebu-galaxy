@@ -6,7 +6,7 @@ import Footer from "@/app/ui/footer";
 import { Analytics } from "@vercel/analytics/react";
 import GoogleAnalytics from "@/app/ui/analytics";
 
-const siteName = "はてなギャラクシー";
+const siteName = "はてな★ギャラクシー";
 const description = "はてなブックマークについたスターを眺められるサイト";
 const url = "https://hatebu-galaxy.vercel.app";
 

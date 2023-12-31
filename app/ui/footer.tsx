@@ -6,7 +6,7 @@ export default function Footer() {
     <footer className="footer footer-center p-10 bg-base-100 text-base-content rounded">
       <nav className="grid grid-flow-col gap-4">
         <Link href="/about" className="link link-hover">
-          はてなギャラクシーとは
+          はてな★ギャラクシーとは
         </Link>
         <Link href="/policy" className="link link-hover">
           プライバシーポリシー
@@ -30,7 +30,7 @@ export default function Footer() {
         </div>
       </nav>
       <aside>
-        <p>&copy; 2023 はてなギャラクシー</p>
+        <p>&copy; 2023 はてな★ギャラクシー</p>
       </aside>
     </footer>
   );

@@ -1,7 +1,7 @@
 export default async function Page() {
   return (
     <article className="prose">
-      <h1>はてなギャラクシーとは</h1>
+      <h1>はてな★ギャラクシーとは</h1>
       <p>
         ユーザーごとの公開ブックマークコメントについたスターのランキングを閲覧できるサービスです。
         <br />

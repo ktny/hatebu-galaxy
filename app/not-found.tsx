@@ -1,7 +1,7 @@
 export default function NotFound() {
   return (
     <>
-      <title>404 | はてなギャラクシー</title>
+      <title>404 | はてな★ギャラクシー</title>
 
       <article className="prose">
         <h1>404</h1>
