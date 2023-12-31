@@ -1,5 +1,4 @@
 import Link from "next/link";
-import Image from "next/image";
 import Bookmarks from "@/app/ui/bookmarks";
 import ScrollTop from "@/app/ui/scrollTop";
 
@@ -28,7 +27,7 @@ export default async function Page({ params }: Props) {
         <div className="flex items-center gap-4">
           <Link href={userPage} target="_blank" className="avatar w-16 h-16 shrink-0 hover:opacity-50">
             <div className="rounded-xl">
-              <Image src={profileIcon} width={64} height={64} alt={username} priority />
+              <img src={profileIcon} width={64} height={64} alt={username} />
             </div>
           </Link>
           <Link href={userPage} target="_blank" className="hover:opacity-50">

@@ -1,5 +1,4 @@
 import Link from "next/link";
-import Image from "next/image";
 
 export default function Footer() {
   return (
@@ -22,10 +21,10 @@ export default function Footer() {
       <nav>
         <div className="grid grid-flow-col gap-6">
           <Link href="https://b.hatena.ne.jp/entry/s/hatebu-galaxy.vercel.app" target="_blank">
-            <Image src="/hatebu_icon.png" alt="はてなブックマーク" width="32" height="32" priority />
+            <img src="/hatebu_icon.png" alt="はてなブックマーク" width="32" height="32" />
           </Link>
           <Link href="https://github.com/ktny/hatebu-galaxy" target="_blank">
-            <Image src="/github_icon.svg" alt="GitHub" width="32" height="32" priority />
+            <img src="/github_icon.svg" alt="GitHub" width="32" height="32" />
           </Link>
         </div>
       </nav>
