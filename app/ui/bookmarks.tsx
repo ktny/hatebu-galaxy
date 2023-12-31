@@ -131,19 +131,28 @@ export default function Bookmarks({ username }: { username: string }) {
       let loopCount = 0;
 
       while (user?.total_bookmarks) {
-        const startPage = loopCount * pageChunk + 1;
+        try {
+          const startPage = loopCount * pageChunk + 1;
+          loopCount += 1;
 
-        // 数ページ分のブックマークデータを取得する
-        const newBookmarks = await fetchBookmarksFromHatena(username, startPage, pageChunk, cache);
-        setBookmarks(bookmarks => bookmarks.concat(newBookmarks.bookmarks));
-        calcTotalStarCount(newBookmarks.bookmarks.map(b => b.star));
+          // 数ページ分のブックマークデータを取得する
+          const newBookmarks = await fetchBookmarksFromHatena(username, startPage, pageChunk, cache);
+          setBookmarks(bookmarks => bookmarks.concat(newBookmarks.bookmarks));
+          calcTotalStarCount(newBookmarks.bookmarks.map(b => b.star));
 
-        loopCount += 1;
-        updateProgressByFetchBookmarkCount(loopCount, user.total_bookmarks);
+          updateProgressByFetchBookmarkCount(loopCount, user.total_bookmarks);
 
-        // 次のページがない場合は終了
-        if (!newBookmarks.hasNextPage) {
-          setProgress(100);
+          // 次のページがない場合は終了
+          if (!newBookmarks.hasNextPage) {
+            setProgress(100);
+            break;
+          }
+        } catch (e) {
+          console.error(e);
+        }
+
+        // 念のためのフォールバック
+        if (loopCount > 10000) {
           break;
         }
       }
