@@ -12,9 +12,9 @@ export function getAsiaTokyoDate(origin: string | number | null = null): Date {
 }
 
 /**
- * UTC時間の日付文字列をYYYY-MM-DD形式のAsia/Tokyoの日付文字列に変換する
- * @param dateString UTCの日付文字列（ex. 2023-12-13T13:00:27Z）
- * @returns YYYY-MM-DD形式のAsia/Tokyoの日付文字列
+ * DateオブジェクトをYYYY-MM-DD形式の日付文字列に変換する
+ * @param date Dateオブジェクト
+ * @returns YYYY-MM-DD形式の日付文字列
  */
 export function formatDateString(date: Date): string {
   // 年月日を取得
@@ -58,14 +58,4 @@ export function extractEIDFromURL(url: string): string | null {
  */
 export function deepCopy(object: any) {
   return JSON.parse(JSON.stringify(object));
-}
-
-/**
- * 数値を先頭0埋めした文字列で返す
- * @param num
- * @param maxLength
- * @returns
- */
-export function padNumber(num: number, maxLength: number): string {
-  return String(num).padStart(maxLength, "0");
 }

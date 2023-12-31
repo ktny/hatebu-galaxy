@@ -174,6 +174,7 @@ export class BookmarkStarGatherer {
       const starPageResponse: StarPageResponse = await response.value.json();
 
       for (const starPageEntry of starPageResponse.entries) {
+        console.log(starPageEntry.uri);
         const eid = extractEIDFromURL(starPageEntry.uri);
         if (eid !== null) {
           const starCount = this.totalizeAllColorStarCountByEntry(bookmarksMapByEid[eid].star, starPageEntry);
