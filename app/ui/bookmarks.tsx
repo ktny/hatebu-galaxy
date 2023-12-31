@@ -13,6 +13,11 @@ import {
   fetchUserInfo,
 } from "@/app/api/api";
 import { useDebounce } from "use-debounce";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import dayjs, { Dayjs } from "dayjs";
+import { debug } from "console";
 
 const pageChunk = 20;
 
@@ -25,6 +30,8 @@ export default function Bookmarks({ username }: { username: string }) {
 
   const [keyword, setKeyword] = useState("");
   const [debounceKeyword] = useDebounce(keyword, 500);
+  const [startDate, setStartDate] = useState<Dayjs | null>(dayjs(getAsiaTokyoDate("2006-01-01")));
+  const [endDate, setEndDate] = useState<Dayjs | null>(dayjs(getAsiaTokyoDate()));
 
   /**
    * 再取得用にstateを初期化する
@@ -222,9 +229,22 @@ export default function Bookmarks({ username }: { username: string }) {
 
   // ブックマークにフィルターをかける
   useEffect(() => {
-    const filteredBookmarks = bookmarks.filter(bookmark => bookmark.comment.includes(debounceKeyword));
+    const filteredBookmarks = bookmarks.filter(bookmark => {
+      const includesKeyword = bookmark.comment.includes(debounceKeyword);
+      const dateFromUnix = dayjs.unix(bookmark.created / 1000);
+      const isAfterStartDate = startDate?.isBefore(dateFromUnix);
+      const isBeforeEndDate = endDate?.isAfter(dateFromUnix);
+
+      // console.log(startDate?.toString());
+      // console.log(endDate?.toString());
+      // console.log(dateFromUnix?.toString());
+
+      // debugger;
+      return includesKeyword && isAfterStartDate && isBeforeEndDate;
+    });
+
     setFilteredBookmarks(filteredBookmarks);
-  }, [bookmarks, debounceKeyword]);
+  }, [bookmarks, debounceKeyword, startDate, endDate]);
 
   if (progress === 0) {
     return (
@@ -268,6 +288,12 @@ export default function Bookmarks({ username }: { username: string }) {
         value={keyword}
         onChange={e => setKeyword(e.target.value)}
       />
+
+      <LocalizationProvider dateAdapter={AdapterDayjs}>
+        <DatePicker className="w-fit bg-white rounded-md" value={startDate} onChange={date => setStartDate(date)} />
+        ～
+        <DatePicker className="w-fit bg-white rounded-md" value={endDate} onChange={date => setEndDate(date)} />
+      </LocalizationProvider>
 
       <div>{filteredBookmarks.length}件</div>
 
