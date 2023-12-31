@@ -18,6 +18,7 @@ const pageChunk = 20;
 
 export default function Bookmarks({ username }: { username: string }) {
   const [bookmarks, setBookmarks] = useState<IBookmark[]>([]);
+  const [filteredBookmarks, setFilteredBookmarks] = useState<IBookmark[]>([]);
   const [progress, setProgress] = useState(0);
   const [totalStars, setTotalStars] = useState<AllColorStarCount>(deepCopy(initalAllColorStarCount));
   const [bookmarkCountForDisplay, setBookmarkCountForDisplay] = useState(20);
@@ -30,6 +31,7 @@ export default function Bookmarks({ username }: { username: string }) {
    */
   function initState() {
     setBookmarks([]);
+    setFilteredBookmarks([]);
     setProgress(0);
     setTotalStars(deepCopy(initalAllColorStarCount));
     setBookmarkCountForDisplay(20);
@@ -204,6 +206,7 @@ export default function Bookmarks({ username }: { username: string }) {
     });
   }, []);
 
+  // ページ遷移時にブックマークを取得する
   useEffect(() => {
     initState();
 
@@ -216,6 +219,12 @@ export default function Bookmarks({ username }: { username: string }) {
     document.addEventListener("scroll", handleScroll, { passive: true });
     return () => document.removeEventListener("scroll", handleScroll);
   }, []);
+
+  // ブックマークにフィルターをかける
+  useEffect(() => {
+    const filteredBookmarks = bookmarks.filter(bookmark => bookmark.comment.includes(debounceKeyword));
+    setFilteredBookmarks(filteredBookmarks);
+  }, [bookmarks, debounceKeyword]);
 
   if (progress === 0) {
     return (
@@ -260,9 +269,10 @@ export default function Bookmarks({ username }: { username: string }) {
         onChange={e => setKeyword(e.target.value)}
       />
 
+      <div>{filteredBookmarks.length}件</div>
+
       <ul className="mt-4">
-        {bookmarks
-          .filter(bookmark => bookmark.comment.includes(debounceKeyword))
+        {filteredBookmarks
           .sort((a, b) => b.star.yellow - a.star.yellow)
           .slice(0, bookmarkCountForDisplay)
           .map((bookmark, i) => (
