@@ -248,23 +248,34 @@ export class BookmarkStarGatherer {
     // 1s sleep
     await setTimeout(1000);
 
-    // 一度に最大で fetchPageChunk * BOOKMARKS_PER_PAGE のブックマークを取得する
-    await this.bulkGatherBookmarks(startPage, pageChunk);
+    try {
+      // 一度に最大で fetchPageChunk * BOOKMARKS_PER_PAGE のブックマークを取得する
+      await this.bulkGatherBookmarks(startPage, pageChunk);
 
-    // 各ブックマークのスターを取得
-    await this.bulkGatherStarCount();
+      // 各ブックマークのスターを取得
+      await this.bulkGatherStarCount();
 
-    // 年ごとのブックマークデータをS3にアップロードする
-    await this.uploadBookmarksToS3();
+      // 年ごとのブックマークデータをS3にアップロードする
+      await this.uploadBookmarksToS3();
 
-    // 次ページがなければ全取得完了のファイルをS3にアップロードする
-    if (!this.hasNextPage) {
-      putItemToDynamo(this.username, this.firstBookmarkCreated);
+      // 次ページがなければ全取得完了のファイルをS3にアップロードする
+      if (!this.hasNextPage) {
+        putItemToDynamo(this.username, this.firstBookmarkCreated);
+      }
+
+      return {
+        bookmarks: Object.values(this.yearlyBookmarks).flat(),
+        hasNextPage: this.hasNextPage,
+      };
+    } catch (e) {
+      console.error(e);
+
+      // いったん現時点のブックマークを返す
+      // TODO: リトライ対応
+      return {
+        bookmarks: Object.values(this.yearlyBookmarks).flat(),
+        hasNextPage: this.hasNextPage,
+      };
     }
-
-    return {
-      bookmarks: Object.values(this.yearlyBookmarks).flat(),
-      hasNextPage: this.hasNextPage,
-    };
   }
 }
