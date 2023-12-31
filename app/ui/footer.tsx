@@ -8,15 +8,15 @@ export default function Footer() {
         <Link href="/about" className="link link-hover">
           はてなギャラクシーとは
         </Link>
+        <Link href="/policy" className="link link-hover">
+          プライバシーポリシー
+        </Link>
         <Link
           href="https://docs.google.com/forms/d/e/1FAIpQLSeUoVhSrB_YPnWOnGWUh_wIA-H5IH4pyjsc1akm6UX3JprUwg/viewform?usp=sf_link"
           target="_blank"
           className="link link-hover"
         >
           お問い合わせ
-        </Link>
-        <Link href="/policy" className="link link-hover">
-          プライバシーポリシー
         </Link>
       </nav>
       <nav>

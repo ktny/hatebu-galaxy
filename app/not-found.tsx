@@ -3,13 +3,13 @@ export default function NotFound() {
     <>
       <title>404 | はてなギャラクシー</title>
 
-      <div className="flex flex-col items-center gap-4">
-        <h1 className="text-2xl">404</h1>
-        <p className="flex items-center text-xl">
+      <article className="prose">
+        <h1>404</h1>
+        <p>
           ページが見つかりませんでした
           <span className="i-solar-star-fall-minimalistic-bold w-6 h-6 bg-yellow-500"></span>
         </p>
-      </div>
+      </article>
     </>
   );
 }
