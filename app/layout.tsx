@@ -6,11 +6,33 @@ import Footer from "@/app/ui/footer";
 import { Analytics } from "@vercel/analytics/react";
 import GoogleAnalytics from "@/app/ui/analytics";
 
+const siteName = "はてなギャラクシー";
+const description = "はてなブックマークについたスターを眺められるサイト";
+const url = "https://hatebu-galaxy.vercel.app";
+
 export const metadata: Metadata = {
-  title: "はてなギャラクシー",
-  description: "はてなブックマークで獲得したスターをランキングで閲覧できるサイトです",
+  title: siteName,
+  description,
   icons:
     "data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%2210 0 100 100%22><text y=%22.90em%22 font-size=%2290%22>⭐</text></svg>",
+  openGraph: {
+    title: siteName,
+    description,
+    url,
+    siteName,
+    locale: "ja_JP",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: siteName,
+    description,
+    site: "@1ststar_hateno",
+    creator: "@kattsu_3",
+  },
+  alternates: {
+    canonical: url,
+  },
 };
 
 export const viewport: Viewport = {
