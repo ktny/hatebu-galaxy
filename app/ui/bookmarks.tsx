@@ -30,8 +30,8 @@ export default function Bookmarks({ username }: { username: string }) {
 
   const [keyword, setKeyword] = useState("");
   const [debounceKeyword] = useDebounce(keyword, 500);
-  const [startDate, setStartDate] = useState<Dayjs | null>(dayjs(getAsiaTokyoDate("2006-01-01")));
-  const [endDate, setEndDate] = useState<Dayjs | null>(dayjs(getAsiaTokyoDate()));
+  const [startDate, setStartDate] = useState<Dayjs | null>(null);
+  const [endDate, setEndDate] = useState<Dayjs | null>(null);
 
   /**
    * 再取得用にstateを初期化する
@@ -230,17 +230,16 @@ export default function Bookmarks({ username }: { username: string }) {
   // ブックマークにフィルターをかける
   useEffect(() => {
     const filteredBookmarks = bookmarks.filter(bookmark => {
-      const includesKeyword = bookmark.comment.includes(debounceKeyword);
+      // 開始日～終了日にブックマークコメントが入っている
       const dateFromUnix = dayjs.unix(bookmark.created / 1000);
-      const isAfterStartDate = startDate?.isBefore(dateFromUnix);
-      const isBeforeEndDate = endDate?.isAfter(dateFromUnix);
+      const isAfterStartDate = startDate === null || startDate?.isBefore(dateFromUnix);
+      const isBeforeEndDate = endDate === null || endDate?.isAfter(dateFromUnix);
 
-      // console.log(startDate?.toString());
-      // console.log(endDate?.toString());
-      // console.log(dateFromUnix?.toString());
+      // コメントかタイトルのどちらかにキーワードが入っている
+      const includesKeywordInComment = bookmark.comment.includes(debounceKeyword);
+      const includesKeywordInTitle = bookmark.title.includes(debounceKeyword);
 
-      // debugger;
-      return includesKeyword && isAfterStartDate && isBeforeEndDate;
+      return (includesKeywordInComment || includesKeywordInTitle) && isAfterStartDate && isBeforeEndDate;
     });
 
     setFilteredBookmarks(filteredBookmarks);
@@ -281,21 +280,25 @@ export default function Bookmarks({ username }: { username: string }) {
         </div>
       </div>
 
-      <input
-        name="keyword"
-        placeholder=""
-        className="input input-bordered input-primary max-w-xs mr-2"
-        value={keyword}
-        onChange={e => setKeyword(e.target.value)}
-      />
+      <div className="flex items-center gap-4">
+        <input
+          name="keyword"
+          placeholder=""
+          className="input input-bordered input-primary"
+          value={keyword}
+          onChange={e => setKeyword(e.target.value)}
+        />
 
-      <LocalizationProvider dateAdapter={AdapterDayjs}>
-        <DatePicker className="w-fit bg-white rounded-md" value={startDate} onChange={date => setStartDate(date)} />
-        ～
-        <DatePicker className="w-fit bg-white rounded-md" value={endDate} onChange={date => setEndDate(date)} />
-      </LocalizationProvider>
+        <LocalizationProvider dateAdapter={AdapterDayjs}>
+          <div className="flex gap-2 items-center">
+            <DatePicker className="w-44 bg-white rounded-md" value={startDate} onChange={date => setStartDate(date)} />
+            <span>～</span>
+            <DatePicker className="w-44 bg-white rounded-md" value={endDate} onChange={date => setEndDate(date)} />
+          </div>
+        </LocalizationProvider>
+      </div>
 
-      <div>{filteredBookmarks.length}件</div>
+      <div className="flex justify-end">{filteredBookmarks.length}件</div>
 
       <ul className="mt-4">
         {filteredBookmarks
