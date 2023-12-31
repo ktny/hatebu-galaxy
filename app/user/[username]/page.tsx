@@ -3,7 +3,17 @@ import Image from "next/image";
 import Bookmarks from "@/app/ui/bookmarks";
 import ScrollTop from "@/app/ui/scrollTop";
 
-export default async function Page({ params }: { params: { username: string } }) {
+type Props = {
+  params: { username: string };
+};
+
+export async function generateMetadata({ params }: Props) {
+  return {
+    title: `${params.username} - はてなギャラクシー`,
+  };
+}
+
+export default async function Page({ params }: Props) {
   const username = params.username;
   const userPage = `https://b.hatena.ne.jp/${username}/bookmark`;
   const profileIcon = `https://cdn.profile-image.st-hatena.com/users/${username}/profile.png`;
