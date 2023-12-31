@@ -114,7 +114,7 @@ export default function Bookmarks({ username }: { username: string }) {
     // キャッシュがあれば直近20ページの更新のみ行う
     if (cache === "no-store") {
       // 数ページ分のブックマークデータを取得する
-      const newBookmarks = await fetchBookmarksFromHatena(username, 1, 5, cache);
+      const newBookmarks = await fetchBookmarksFromHatena(username, 1, pageChunk, cache);
 
       updateBookmarkDiff(newBookmarks.bookmarks);
       setProgress(100);
