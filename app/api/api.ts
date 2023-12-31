@@ -31,14 +31,20 @@ export async function fetchBookmarksFromHatena(
   pageChunk: number,
   cache: RequestCache
 ): Promise<fetchBookmarksFromHatenaResponse> {
-  const response = await fetch(`/api/gather?username=${username}&startPage=${startPage}&pageChunk=${pageChunk}`, {
-    cache,
-  });
+  // TODO: リトライ対応
+  try {
+    const response = await fetch(`/api/gather?username=${username}&startPage=${startPage}&pageChunk=${pageChunk}`, {
+      cache,
+    });
 
-  if (response.ok) {
-    return await response.json();
+    if (response.ok) {
+      return await response.json();
+    }
+    return { bookmarks: [], hasNextPage: false };
+  } catch (error) {
+    console.error(error);
+    return { bookmarks: [], hasNextPage: false };
   }
-  return { bookmarks: [], hasNextPage: false };
 }
 
 /**
