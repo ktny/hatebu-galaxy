@@ -12,6 +12,7 @@ import {
   fetchFirstBookmarkCreated,
   fetchUserInfo,
 } from "@/app/api/api";
+import { useDebounce } from "use-debounce";
 
 const pageChunk = 20;
 
@@ -20,6 +21,9 @@ export default function Bookmarks({ username }: { username: string }) {
   const [progress, setProgress] = useState(0);
   const [totalStars, setTotalStars] = useState<AllColorStarCount>(deepCopy(initalAllColorStarCount));
   const [bookmarkCountForDisplay, setBookmarkCountForDisplay] = useState(20);
+
+  const [keyword, setKeyword] = useState("");
+  const [debounceKeyword] = useDebounce(keyword, 500);
 
   /**
    * 再取得用にstateを初期化する
@@ -248,8 +252,17 @@ export default function Bookmarks({ username }: { username: string }) {
         </div>
       </div>
 
+      <input
+        name="keyword"
+        placeholder=""
+        className="input input-bordered input-primary max-w-xs mr-2"
+        value={keyword}
+        onChange={e => setKeyword(e.target.value)}
+      />
+
       <ul className="mt-4">
         {bookmarks
+          .filter(bookmark => bookmark.comment.includes(debounceKeyword))
           .sort((a, b) => b.star.yellow - a.star.yellow)
           .slice(0, bookmarkCountForDisplay)
           .map((bookmark, i) => (
