@@ -43,7 +43,9 @@ export async function fetchBookmarksFromHatena(
     return { bookmarks: [], hasNextPage: false };
   } catch (error) {
     console.error(error);
-    return { bookmarks: [], hasNextPage: false };
+
+    // エラーのときは次ページがあるとして返す
+    return { bookmarks: [], hasNextPage: true };
   }
 }
 
