@@ -17,7 +17,6 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import dayjs, { Dayjs } from "dayjs";
-import { debug } from "console";
 
 const pageChunk = 20;
 
@@ -280,7 +279,7 @@ export default function Bookmarks({ username }: { username: string }) {
         </div>
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-4 mt-4 flex-wrap md:flex-nowrap">
         <input
           name="keyword"
           placeholder="キーワードで検索"
@@ -288,24 +287,18 @@ export default function Bookmarks({ username }: { username: string }) {
           value={keyword}
           onChange={e => setKeyword(e.target.value)}
         />
-
         <LocalizationProvider dateAdapter={AdapterDayjs}>
           <div className="flex gap-2 items-center">
             <DatePicker
-              className="w-44 bg-base-content rounded-md"
+              className="bg-base-content rounded-md"
               value={startDate}
               onChange={date => setStartDate(date)}
             />
             <span>～</span>
-            <DatePicker
-              className="w-44 bg-base-content rounded-md"
-              value={endDate}
-              onChange={date => setEndDate(date)}
-            />
+            <DatePicker className="bg-base-content rounded-md" value={endDate} onChange={date => setEndDate(date)} />
           </div>
         </LocalizationProvider>
       </div>
-
       <div className="flex justify-end">{filteredBookmarks.length}件</div>
 
       <ul className="mt-4">
