@@ -30,9 +30,9 @@ export const metadata: Metadata = {
     site: "@1ststar_hateno",
     creator: "@kattsu_3",
   },
-  alternates: {
-    canonical: url,
-  },
+  // alternates: {
+  //   canonical: url,
+  // },
 };
 
 export const viewport: Viewport = {

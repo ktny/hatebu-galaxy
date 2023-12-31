@@ -7,11 +7,17 @@ type Props = {
 };
 
 export async function generateMetadata({ params }: Props) {
+  const title = `${params.username} - はてな★ギャラクシー`;
+  const url = `https://hatebu-galaxy.vercel.app/user/${params.username}`;
+
   return {
-    title: `${params.username} - はてな★ギャラクシー`,
+    title,
     openGraph: {
-      title: `${params.username} - はてな★ギャラクシー`,
-      url: `https://hatebu-galaxy.vercel.app/user/${params.username}`,
+      title,
+      url,
+    },
+    alternates: {
+      canonical: url,
     },
   };
 }
