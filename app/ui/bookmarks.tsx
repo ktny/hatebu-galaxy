@@ -110,11 +110,11 @@ export default function Bookmarks({ username }: { username: string }) {
    * ブックマークを再取得する
    * @param cache
    */
-  async function reloadBookmarks(cached: boolean = false) {
+  async function reloadBookmarks(cache: RequestCache) {
     // キャッシュがあれば直近20ページの更新のみ行う
-    if (cached) {
+    if (cache === "no-store") {
       // 数ページ分のブックマークデータを取得する
-      const newBookmarks = await fetchBookmarksFromHatena(username, 1, 5, "no-store");
+      const newBookmarks = await fetchBookmarksFromHatena(username, 1, 5, cache);
 
       updateBookmarkDiff(newBookmarks.bookmarks);
       setProgress(100);
@@ -134,7 +134,7 @@ export default function Bookmarks({ username }: { username: string }) {
         const startPage = loopCount * pageChunk + 1;
 
         // 数ページ分のブックマークデータを取得する
-        const newBookmarks = await fetchBookmarksFromHatena(username, startPage, pageChunk, "force-cache");
+        const newBookmarks = await fetchBookmarksFromHatena(username, startPage, pageChunk, cache);
         setBookmarks(bookmarks => bookmarks.concat(newBookmarks.bookmarks));
         calcTotalStarCount(newBookmarks.bookmarks.map(b => b.star));
 
@@ -219,7 +219,7 @@ export default function Bookmarks({ username }: { username: string }) {
     // 過去のキャッシュ済ブックマークがあれば取得する
     fetchCachedBookmarks().then(cached => {
       // 直近のブックマークを更新する
-      reloadBookmarks(cached);
+      reloadBookmarks(cached ? "no-store" : "force-cache");
     });
 
     document.addEventListener("scroll", handleScroll, { passive: true });
@@ -261,7 +261,7 @@ export default function Bookmarks({ username }: { username: string }) {
             className="btn btn-secondary btn-sm shrink-0"
             onClick={() => {
               if (confirm("再取得には時間がかかる可能性があります。再取得しますか？")) {
-                reloadBookmarks(false);
+                reloadBookmarks("reload");
               }
             }}
             disabled={progress < 100}
