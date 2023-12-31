@@ -12,20 +12,33 @@ import {
   fetchFirstBookmarkCreated,
   fetchUserInfo,
 } from "@/app/api/api";
+import { useDebounce } from "use-debounce";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import dayjs, { Dayjs } from "dayjs";
+import { debug } from "console";
 
 const pageChunk = 20;
 
 export default function Bookmarks({ username }: { username: string }) {
   const [bookmarks, setBookmarks] = useState<IBookmark[]>([]);
+  const [filteredBookmarks, setFilteredBookmarks] = useState<IBookmark[]>([]);
   const [progress, setProgress] = useState(0);
   const [totalStars, setTotalStars] = useState<AllColorStarCount>(deepCopy(initalAllColorStarCount));
   const [bookmarkCountForDisplay, setBookmarkCountForDisplay] = useState(20);
+
+  const [keyword, setKeyword] = useState("");
+  const [debounceKeyword] = useDebounce(keyword, 500);
+  const [startDate, setStartDate] = useState<Dayjs | null>(null);
+  const [endDate, setEndDate] = useState<Dayjs | null>(null);
 
   /**
    * 再取得用にstateを初期化する
    */
   function initState() {
     setBookmarks([]);
+    setFilteredBookmarks([]);
     setProgress(0);
     setTotalStars(deepCopy(initalAllColorStarCount));
     setBookmarkCountForDisplay(20);
@@ -200,6 +213,7 @@ export default function Bookmarks({ username }: { username: string }) {
     });
   }, []);
 
+  // ページ遷移時にブックマークを取得する
   useEffect(() => {
     initState();
 
@@ -212,6 +226,24 @@ export default function Bookmarks({ username }: { username: string }) {
     document.addEventListener("scroll", handleScroll, { passive: true });
     return () => document.removeEventListener("scroll", handleScroll);
   }, []);
+
+  // ブックマークにフィルターをかける
+  useEffect(() => {
+    const filteredBookmarks = bookmarks.filter(bookmark => {
+      // 開始日～終了日にブックマークコメントが入っている
+      const dateFromUnix = dayjs.unix(bookmark.created / 1000);
+      const isAfterStartDate = startDate === null || startDate?.isBefore(dateFromUnix);
+      const isBeforeEndDate = endDate === null || endDate?.isAfter(dateFromUnix);
+
+      // コメントかタイトルのどちらかにキーワードが入っている
+      const includesKeywordInComment = bookmark.comment.includes(debounceKeyword);
+      const includesKeywordInTitle = bookmark.title.includes(debounceKeyword);
+
+      return (includesKeywordInComment || includesKeywordInTitle) && isAfterStartDate && isBeforeEndDate;
+    });
+
+    setFilteredBookmarks(filteredBookmarks);
+  }, [bookmarks, debounceKeyword, startDate, endDate]);
 
   if (progress === 0) {
     return (
@@ -248,8 +280,28 @@ export default function Bookmarks({ username }: { username: string }) {
         </div>
       </div>
 
+      <div className="flex items-center gap-4">
+        <input
+          name="keyword"
+          placeholder=""
+          className="input input-bordered input-primary"
+          value={keyword}
+          onChange={e => setKeyword(e.target.value)}
+        />
+
+        <LocalizationProvider dateAdapter={AdapterDayjs}>
+          <div className="flex gap-2 items-center">
+            <DatePicker className="w-44 bg-white rounded-md" value={startDate} onChange={date => setStartDate(date)} />
+            <span>～</span>
+            <DatePicker className="w-44 bg-white rounded-md" value={endDate} onChange={date => setEndDate(date)} />
+          </div>
+        </LocalizationProvider>
+      </div>
+
+      <div className="flex justify-end">{filteredBookmarks.length}件</div>
+
       <ul className="mt-4">
-        {bookmarks
+        {filteredBookmarks
           .sort((a, b) => b.star.yellow - a.star.yellow)
           .slice(0, bookmarkCountForDisplay)
           .map((bookmark, i) => (

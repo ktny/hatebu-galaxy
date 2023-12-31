@@ -68,7 +68,12 @@ export async function fetchBookmarksFromFile(fileNames: string[]): Promise<IBook
  * @returns
  */
 export async function fetchFirstBookmarkCreated(username: string): Promise<number> {
-  const response = await fetch(`/api/firstBookmarkCreated?username=${username}`, { cache: "no-store" });
+  const response = await fetch(`/api/firstBookmarkCreated?username=${username}`, {
+    // cache: "no-store",
+    // headers: new Headers({
+    //   "Cache-Control": "max-age=86400",
+    // }),
+  });
 
   if (response.ok) {
     const data = await response.json();
