@@ -259,7 +259,7 @@ export default function Bookmarks({ username }: { username: string }) {
         <div className="flex items-center gap-4">
           <StarList allColorStarCount={totalStars} forceCountDisplay={true}></StarList>
           <button
-            className="btn btn-primary btn-sm shrink-0"
+            className="btn btn-secondary btn-sm shrink-0"
             onClick={() => {
               if (confirm("再取得には時間がかかる可能性があります。再取得しますか？")) {
                 reloadBookmarks(false);
@@ -283,17 +283,25 @@ export default function Bookmarks({ username }: { username: string }) {
       <div className="flex items-center gap-4">
         <input
           name="keyword"
-          placeholder=""
-          className="input input-bordered input-primary"
+          placeholder="キーワードで検索"
+          className="input input-bordered input-secondary"
           value={keyword}
           onChange={e => setKeyword(e.target.value)}
         />
 
         <LocalizationProvider dateAdapter={AdapterDayjs}>
           <div className="flex gap-2 items-center">
-            <DatePicker className="w-44 bg-white rounded-md" value={startDate} onChange={date => setStartDate(date)} />
+            <DatePicker
+              className="w-44 bg-base-content rounded-md"
+              value={startDate}
+              onChange={date => setStartDate(date)}
+            />
             <span>～</span>
-            <DatePicker className="w-44 bg-white rounded-md" value={endDate} onChange={date => setEndDate(date)} />
+            <DatePicker
+              className="w-44 bg-base-content rounded-md"
+              value={endDate}
+              onChange={date => setEndDate(date)}
+            />
           </div>
         </LocalizationProvider>
       </div>
