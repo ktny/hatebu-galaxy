@@ -20,5 +20,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   // ブックマーク取得を行う
   const gatherer = new BookmarkStarGatherer(username);
   const data = await gatherer.gather(startPage, pageChunk);
+
+  if (data.bookmarks.length === 0) {
+    res.status(404).json({});
+  }
+
   res.status(200).json(data);
 }

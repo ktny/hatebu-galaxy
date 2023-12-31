@@ -40,7 +40,12 @@ export async function fetchBookmarksFromHatena(
     if (response.ok) {
       return await response.json();
     }
-    return { bookmarks: [], hasNextPage: false };
+
+    if (response.status === 404) {
+      return { bookmarks: [], hasNextPage: false };
+    }
+
+    return { bookmarks: [], hasNextPage: true };
   } catch (error) {
     console.error(error);
 
