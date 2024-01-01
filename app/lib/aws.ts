@@ -67,7 +67,7 @@ export async function uploadToS3(key: string, data: object | null = null) {
   return new Promise((resolve, reject) => {
     s3.putObject(params, err => {
       if (err) {
-        console.error(err, err.stack);
+        console.error("File upload error:", err);
         reject(err);
       } else {
         console.log("File upload successfully:", key);
