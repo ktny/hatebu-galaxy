@@ -67,7 +67,9 @@ export class BookmarkStarGatherer {
    */
   private async gatherBookmarks(page: number = 1): Promise<BookmarksPageResponse> {
     const url = `https://b.hatena.ne.jp/api/users/${this.username}/bookmarks?page=${page}`;
-    const response = await fetch(url);
+    const response = await fetch(url, {
+      signal: AbortSignal.timeout(30000), // 30sにtimoutを伸ばす
+    });
     const data: BookmarksPageResponse = await response.json();
     return data;
   }
@@ -155,7 +157,11 @@ export class BookmarkStarGatherer {
     for (let i = 0; i < commentURLList.length; i += BOOKMARKS_PER_PAGE) {
       const commentURLListForStar = commentURLList.slice(i, i + BOOKMARKS_PER_PAGE);
       const starPageRequestURL = this.buildStarPageRequestURL(commentURLListForStar);
-      promises.push(fetch(starPageRequestURL));
+      promises.push(
+        fetch(starPageRequestURL, {
+          signal: AbortSignal.timeout(30000), // 30sにtimoutを伸ばす
+        })
+      );
     }
 
     // ブックマークごとにつけられたスターを一度に取得

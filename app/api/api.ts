@@ -35,6 +35,7 @@ export async function fetchBookmarksFromHatena(
   try {
     const response = await fetch(`/api/gather?username=${username}&startPage=${startPage}&pageChunk=${pageChunk}`, {
       cache,
+      signal: AbortSignal.timeout(30000), // 30sにtimoutを伸ばす
     });
 
     if (response.ok) {
