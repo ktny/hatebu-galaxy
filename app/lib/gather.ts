@@ -246,7 +246,7 @@ export class BookmarkStarGatherer {
       }
 
       // 取得したデータはファイルに保存してキャッシュする
-      uploadToS3(key, cachedBookmarks);
+      await uploadToS3(key, cachedBookmarks);
     }
   }
 
