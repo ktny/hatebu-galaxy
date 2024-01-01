@@ -1,6 +1,9 @@
 import type { NextApiRequest, NextApiResponse } from "next";
 import { CLOUDFRONT_DOMAIN } from "@/app/config";
 
+// vercel serverless function のtimeoutを30sに設定する
+export const maxDuration = 30;
+
 /**
  * CloudFrontから指定のオブジェクトを取得する
  * @param req
