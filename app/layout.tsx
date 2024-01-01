@@ -3,7 +3,6 @@ import { Viewport } from "next";
 import "@/app/globals.css";
 import Header from "@/app/ui/header";
 import Footer from "@/app/ui/footer";
-import { Analytics } from "@vercel/analytics/react";
 import GoogleAnalytics from "@/app/ui/analytics";
 
 const siteName = "はてな★ギャラクシー";
@@ -49,7 +48,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <Header />
         <main className="flex flex-1 justify-center mt-4 p-4">{children}</main>
         <Footer />
-        <Analytics />
         <GoogleAnalytics />
       </body>
     </html>
