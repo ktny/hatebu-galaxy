@@ -23,7 +23,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if (data.bookmarks.length === 0) {
     res.status(404).json({});
+  } else {
+    res.status(200).json(data);
   }
-
-  res.status(200).json(data);
 }
