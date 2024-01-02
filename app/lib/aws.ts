@@ -1,5 +1,5 @@
 import { S3, CloudFront, DynamoDB, config } from "aws-sdk";
-import { CLOUDFRONT_ID } from "@/app/config";
+import { CLOUDFRONT_DOMAIN, CLOUDFRONT_ID } from "@/app/config";
 
 const region = "ap-northeast-1";
 const s3BucketName = "hatebu-galaxy";
@@ -75,6 +75,26 @@ export async function uploadToS3(key: string, data: object | null = null) {
       }
     });
   });
+}
+
+/**
+ * CloudFrontからデータをダウンロードする
+ * @param key バケット内のオブジェクトのパス
+ * @param timestamp キャッシュさせないためのtimestamp
+ */
+export async function downloadFromCloudFront(key: string, timestamp: number | null = null): Promise<any> {
+  let url = `${CLOUDFRONT_DOMAIN}/${key}`;
+  if (timestamp !== null) {
+    url += `?timestamp=${timestamp}`;
+  }
+
+  const response = await fetch(url);
+  if (response.ok) {
+    console.log("File download from CloudFront successfully:");
+    return response.json();
+  } else {
+    console.error("File download from CloudFront error:");
+  }
 }
 
 /**

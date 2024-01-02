@@ -19,7 +19,7 @@ import {
 } from "@/app/lib/util";
 import { BOOKMARKS_PER_PAGE } from "@/app/constants";
 import { setTimeout } from "timers/promises";
-import { downloadFromS3, putItemToDynamo, uploadToS3 } from "./aws";
+import { downloadFromCloudFront, downloadFromS3, putItemToDynamo, uploadToS3 } from "./aws";
 
 const starPageAPIEndpoint = `https://s.hatena.ne.jp/entry.json`;
 
@@ -228,7 +228,9 @@ export class BookmarkStarGatherer {
 
       try {
         // CloudFrontから取得すると初回にその時点のS3ファイルでキャッシュしてしまい不整合が生まれるのでS3から取得する
-        cachedBookmarks = await downloadFromS3(key);
+        //
+        const timestamp = new Date().getTime();
+        cachedBookmarks = await downloadFromCloudFront(key, timestamp);
 
         // すでに年ファイルがある場合
         // そのファイルのブックマークと重複する場合は今回ので上書き、ない場合は追加を行う
