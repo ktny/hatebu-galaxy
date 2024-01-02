@@ -40,7 +40,9 @@ export class BookmarkStarGatherer {
    */
   private buildEntryBookmarkURL(bookmark: Bookmark): string {
     const urlWithoutHTTP = excludeProtocolFromURL(bookmark.url);
-    return `https://b.hatena.ne.jp/entry/s/${urlWithoutHTTP}`;
+    return bookmark.url.startsWith("https")
+      ? `https://b.hatena.ne.jp/entry/s/${urlWithoutHTTP}`
+      : `https://b.hatena.ne.jp/entry/${urlWithoutHTTP}`;
   }
 
   /**
