@@ -77,7 +77,6 @@ export interface IBookmark {
   bookmarkCount: number;
   category: string;
   entryURL: string;
-  entryBookmarkURL: string;
   commentURL: string;
   created: number;
   comment: string;

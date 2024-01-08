@@ -1,7 +1,28 @@
 import Link from "next/link";
 import StarList from "@/app/ui/starList";
-import { IBookmark } from "@/app/lib/models";
+import { Bookmark, IBookmark } from "@/app/lib/models";
 import { formatDateString } from "@/app/lib/util";
+
+/**
+ * URLからprotocolを除外する
+ * @param url
+ * @returns
+ */
+function excludeProtocolFromURL(url: string) {
+  return url.replace("http://", "").replace("https://", "");
+}
+
+/**
+ * エントリのブックマーク一覧のURLを返す
+ * @param bookmark
+ * @returns
+ */
+function buildEntryBookmarkURL(url: string): string {
+  const urlWithoutHTTP = excludeProtocolFromURL(url);
+  return url.startsWith("https")
+    ? `https://b.hatena.ne.jp/entry/s/${urlWithoutHTTP}`
+    : `https://b.hatena.ne.jp/entry/${urlWithoutHTTP}`;
+}
 
 export default function Bookmark({
   username,
@@ -28,7 +49,7 @@ export default function Bookmark({
             {bookmark.title}
           </Link>
           <Link
-            href={bookmark.entryBookmarkURL}
+            href={buildEntryBookmarkURL(bookmark.entryURL)}
             target="_blank"
             className="badge badge-accent shrink-0 hover:opacity-50"
           >

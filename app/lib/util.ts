@@ -25,15 +25,6 @@ export function formatDateString(date: Date): string {
 }
 
 /**
- * URLからprotocolを除外する
- * @param url
- * @returns
- */
-export function excludeProtocolFromURL(url: string) {
-  return url.replace("http://", "").replace("https://", "");
-}
-
-/**
  * URLからeidを取得する
  * @param url
  * @returns eid

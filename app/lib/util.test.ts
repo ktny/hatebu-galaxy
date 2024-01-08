@@ -1,4 +1,4 @@
-import { excludeProtocolFromURL, extractEIDFromURL, formatDateString } from "./util";
+import { extractEIDFromURL, formatDateString } from "./util";
 
 test("test formatDateString", () => {
   const date1 = new Date("2023-12-31T13:00:27Z");
@@ -6,14 +6,6 @@ test("test formatDateString", () => {
 
   const date2 = new Date(1704034800000);
   expect(formatDateString(date2)).toBe("2024-01-01");
-});
-
-test("test excludeProtocolFromURL", () => {
-  const url1 = "https://firststar-hateno.hatenablog.com/entry/2023/05/20/170926";
-  expect(excludeProtocolFromURL(url1)).toBe("firststar-hateno.hatenablog.com/entry/2023/05/20/170926");
-
-  const url2 = "http://firststar-hateno.hatenablog.com/entry/2023/05/20/170926";
-  expect(excludeProtocolFromURL(url2)).toBe("firststar-hateno.hatenablog.com/entry/2023/05/20/170926");
 });
 
 test("test extractEIDFromURL", () => {

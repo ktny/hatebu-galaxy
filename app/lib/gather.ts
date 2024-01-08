@@ -34,18 +34,6 @@ export class BookmarkStarGatherer {
   }
 
   /**
-   * エントリのブックマーク一覧のURLを返す
-   * @param bookmark
-   * @returns
-   */
-  private buildEntryBookmarkURL(bookmark: Bookmark): string {
-    const urlWithoutHTTP = excludeProtocolFromURL(bookmark.url);
-    return bookmark.url.startsWith("https")
-      ? `https://b.hatena.ne.jp/entry/s/${urlWithoutHTTP}`
-      : `https://b.hatena.ne.jp/entry/${urlWithoutHTTP}`;
-  }
-
-  /**
    * スター取得用APIのリクエストURLを返す
    * @param commentURLList
    * @returns スター取得用APIのリクエストURL
@@ -125,7 +113,6 @@ export class BookmarkStarGatherer {
           comment: bookmark.comment,
           image: bookmark.entry.image,
           star: deepCopy(initalAllColorStarCount),
-          entryBookmarkURL: this.buildEntryBookmarkURL(bookmark),
           commentURL: buildCommentURL(bookmark.location_id, dateString.replaceAll("-", "")),
         };
 
