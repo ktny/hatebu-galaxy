@@ -10,16 +10,10 @@ import {
   StarCount,
   YearlyBookmarks,
 } from "@/app/lib/models";
-import {
-  getAsiaTokyoDate,
-  deepCopy,
-  excludeProtocolFromURL,
-  extractEIDFromURL,
-  formatDateString,
-} from "@/app/lib/util";
+import { getAsiaTokyoDate, deepCopy, extractEIDFromURL, formatDateString } from "@/app/lib/util";
 import { BOOKMARKS_PER_PAGE } from "@/app/constants";
 import { setTimeout } from "timers/promises";
-import { downloadFromCloudFront, downloadFromS3, putItemToDynamo, uploadToS3 } from "./aws";
+import { downloadFromCloudFront, putItemToDynamo, uploadToS3 } from "./aws";
 
 const starPageAPIEndpoint = `https://s.hatena.ne.jp/entry.json`;
 
